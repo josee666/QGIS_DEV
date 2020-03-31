@@ -1,0 +1,15 @@
+Comment configurer son ordinateur pour avoir acces à les outils de QGIS en python :
+
+1- Installer PYCHARM community (pas obligé)
+
+2- Dans File, Setting, Project, project interpreter de PYCHARM aller chercher le python.exe dans le dossier d'installation de QGIS :
+   ex.  E:\OSGeo4W64\apps\Python37\python.exe
+
+3- Ajouter le fichier (dans le dossier du python.exe) "QGIS.pth" qui contient les chemins suivants (changer les chemins pour les votres) : E:\OSGeo4W64\apps\qgis-ltr\python 
+   et E:\OSGeo4W64\apps\qgis-ltr\python\plugins
+   
+   Cela permet d'importer toute la gamme des outils et QGIS Qt application
+
+4- Ajouter une variable environnement systeme suivante : nom de la varialbe = QT_QPA_PLATFORM_PLUGIN_PATH 
+                                                         Valeur de la variable = E:\OSGeo4W64\apps\Qt5\plugins\platforms 
+   Cela permet d'initialiser QGIS
