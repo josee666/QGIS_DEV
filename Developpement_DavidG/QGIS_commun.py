@@ -33,7 +33,9 @@ from os import path
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     """Permet de transferer une classe d'entité provenant d'une .gdb dans un Geopackage existant ou inexistant'.
             Args:
-                gdb : .gdb contenenant les classes d'entités
+                ce : classse d'entité que l'on veut transférer
+                gdb : gdb contenenant la classe d'entité
+                gpkg : gpkg ou la classe d'entité sera transferée
 
 
             Exemples d'appel de la fonction:
