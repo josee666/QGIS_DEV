@@ -1,0 +1,7 @@
+
+
+Pour faire une boite a outil QGIS revoici le lien :
+
+https://www.qgistutorials.com/sl/docs/3/processing_python_plugin.html
+
+
