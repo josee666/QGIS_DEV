@@ -5,3 +5,5 @@ Pour faire une boite a outil QGIS revoici le lien :
 https://www.qgistutorials.com/sl/docs/3/processing_python_plugin.html
 
 
+installation avec OSGEO incluant les driver pour editer un GDB
+https://gis.stackexchange.com/questions/26285/installing-file-geodatabase-gdb-support-in-qgis
