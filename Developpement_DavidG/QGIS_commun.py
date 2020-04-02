@@ -37,7 +37,6 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
                 gdb : gdb contenenant la classe d'entité
                 gpkg : gpkg ou la classe d'entité sera transferée
 
-
             Exemples d'appel de la fonction:
             ce = 'ForS5_fus'
             gdb = "E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
@@ -45,7 +44,6 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
 
             transfererCeGdbToGeoPackage(ce, gdb, gpkg)
     """
-
     # Classe dentité dans la gdb
     feature = gdb + '|' + 'layername=' + ce
 

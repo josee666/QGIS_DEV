@@ -174,7 +174,6 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         #                                        invert_spatial_relationship="NOT_INVERT")
 
         # refaire une selection WITHIN avec le nouveau perimetre pas de trou
-        
         processing.run("native:selectbylocation", {'INPUT': ce_for, 'PREDICATE': [6],
                                                    'INTERSECT': newperm5trm, 'METHOD': 0})
         # Copier le racc_dif

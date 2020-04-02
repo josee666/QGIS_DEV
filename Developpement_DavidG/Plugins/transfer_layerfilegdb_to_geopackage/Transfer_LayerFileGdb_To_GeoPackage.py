@@ -226,26 +226,28 @@ class TransferLayerFileGdbToGeoPackage:
             for name in list:
 
                 try:
-                    name2 = (name.replace('_', ''))
+
                     ce = '{0}'.format(gdb) + '|' + 'layername=' + '{0}'.format(name)
 
                     # faire un layer avec la string
                     layer = QgsVectorLayer(ce, '{0}'.format(name), 'ogr')
 
+                    # options de sauvegarde
+                    options = QgsVectorFileWriter.SaveVectorOptions()
+
+                    # permet de copier plusieurs classe d'entité et table dasn une gpkg existante
                     if path.isfile(filename +'.gpkg'):
 
-                        options = QgsVectorFileWriter.SaveVectorOptions()
-                        # permet de copier plusieurs classe d'entité et table
                         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-
                         options.driverName = 'GPKG'
-                        options.layerName = '{0}'.format(name2)
+                        options.layerName = '{0}'.format(name)
                         QgsVectorFileWriter.writeAsVectorFormat(layer, filename, options)
 
+                    # gpkg inexistante
                     else:
-                        options = QgsVectorFileWriter.SaveVectorOptions()
+                        
                         options.driverName = 'GPKG'
-                        # options.layerName = '{0}'.format(name2)
+                        options.layerName = '{0}'.format(name)
                         QgsVectorFileWriter.writeAsVectorFormat(layer, filename,options)
 
 
