@@ -34,8 +34,9 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     """Permet de transferer une classe d'entité provenant d'une .gdb dans un Geopackage existant ou inexistant'.
             Args:
                 ce : classse d'entité que l'on veut transférer
-                gdb : gdb contenenant la classe d'entité
-                gpkg : gpkg ou la classe d'entité sera transferée
+                gdb : gdb contenenant les classes d'entités
+                gpkg : gpkg ou la classe d'entité sera transferer
+
 
             Exemples d'appel de la fonction:
             ce = 'ForS5_fus'
@@ -44,6 +45,7 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
 
             transfererCeGdbToGeoPackage(ce, gdb, gpkg)
     """
+
     # Classe dentité dans la gdb
     feature = gdb + '|' + 'layername=' + ce
 
@@ -79,13 +81,51 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
         # Transférer la ce de la gdb vers le GeoPackage
         QgsVectorFileWriter.writeAsVectorFormat(layer, gpkg, options)
 
+def updateCursor(ce, champ, valeur, nouvelleValeur):
+    """Permet de changer une valeure specifique dans un champ specifique avec une nouvelle valeur'.
+               Args:
+                   ce : classe d'entité
+                   champ : Nom du champ
+                   valeur : valeur que l'on veut modifier dans le champ
+                   nouvelleValeur : Nouvelle valeure que l'on veut mettre dans le champ
+
+               Exemples d'appel de la fonction:
+
+                ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
+                            ou
+                dans un geopackage:
+
+                ce ="E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gpkg|layername=ForS5_fus
+                champ = 'ORIGINE'
+                ancienneValeure = 'CT'
+                nouvelleValeure = 'P'
+
+               updateCursor(ce, champ, valeur, nouvelleValeur):
+       """
+
+    layer = QgsVectorLayer(ce, 'lyr', 'ogr')
+    layer_provider = layer.dataProvider()
+    layer.startEditing()
+    for feature in layer.getFeatures():
+        if feature[champ] == valeur:
+            id = feature.id()
+            # trouver l'index du champ
+            fields = layer.fields()
+            indexChamp = fields.indexFromName(champ) # Index du champ
+            attr_value = {indexChamp: nouvelleValeur} # Nouvelle valeure
+            layer_provider.changeAttributeValues({id: attr_value})
+        layer.commitChanges()
+
 if __name__ == '__main__':
-    ce = 'ForS5_fus'
-    gdb = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
-    gpkg = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gpkg"
+    # ce = 'ForS5_fus'
+    # gdb = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
+    # gpkg = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gpkg"
+    #
+    # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
 
-    transfererCeGdbToGeoPackage(ce, gdb, gpkg)
+    ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
+    champ = 'CDE_CO'
+    ancienneValeure = 'A'
+    nouvelleValeure = 'Z'
 
-
-
-
+    updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
