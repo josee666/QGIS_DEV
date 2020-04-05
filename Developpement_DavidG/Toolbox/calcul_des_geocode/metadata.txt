@@ -3,14 +3,14 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Faire un Racc dif
+name=Calcul des GEOCODE
 qgisMinimumVersion=3.0
-description=Faire un racc dif
+description=Permet de calculer des GEOCODE
 version=0.1
 author=David Gauthier - MFFP (DIF)
 email=david.gauthier@mffp.gouv.qc.ca
 
-about=Permet de faire un racc dif pour les contrats
+about=Permet de calculer des GEOCODE
 
 tracker=http://bugs
 repository=http://repo

@@ -29,6 +29,23 @@ from random import randrange
 import os
 from os import path
 
+#
+# # Chemin ou QGIS est installer
+# QgsApplication.setPrefixPath(r"E:\OSGeo4W64\bin", True)
+#
+# # Créer une reference à QgsApplication,
+# # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+# qgs = QgsApplication([], False)
+#
+# # initialiser QGIS
+# qgs.initQgis()
+#
+# # Initialiser les outils qgis
+# Processing.initialize()
+#
+# # Permet d'utiliser les algorithmes "natif" ecrit en c++
+# # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
+# QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     """Permet de transferer une classe d'entité provenant d'une .gdb dans un Geopackage existant ou inexistant'.
@@ -55,7 +72,7 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     # Option de sauvegarde
     options = QgsVectorFileWriter.SaveVectorOptions()
 
-    
+
     # Si le Geopackage existe
     if path.isfile(gpkg):
 
@@ -104,6 +121,8 @@ def updateCursor(ce, champ, valeur, nouvelleValeur):
        """
 
     layer = QgsVectorLayer(ce, 'lyr', 'ogr')
+
+
     layer_provider = layer.dataProvider()
     layer.startEditing()
     for feature in layer.getFeatures():
@@ -116,16 +135,115 @@ def updateCursor(ce, champ, valeur, nouvelleValeur):
             layer_provider.changeAttributeValues({id: attr_value})
         layer.commitChanges()
 
+def calculGeocode(ce, champ, whereclause =''):
+    """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
+                Args:
+                    ce : classse d'entité ou lon veut calculer un GEOCODE
+                    champ : le champ ou le calcul de GEOCODE sera fait
+                    whereclause : Expression sql pour faire une selection sur la classe d'entité
+
+                Exemples d'appel de la fonction:
+                ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
+                champ = 'GEOCODE' ou'GEOC_FOR' ou 'GEOC_MAJ' etc... (il faut que le champ existe)
+                whereclause(optionnel) = "\"GES_CO\" = 'ENEN'"
+
+                calculGeocode(ce, champ, whereclause)
+        """
+    # Si pas de clause, je selectionne tout les objectid de la couche
+    if whereclause == '':
+        whereclause = ' \"OBJECTID\" is not null'
+
+    # Verifie si 'ce' est une string ou deja un vectorlayer de QGIS
+    if isinstance(ce, str):
+        layer = QgsVectorLayer(ce, 'lyr', 'ogr')
+    else:
+        layer = ce
+
+
+    layer.selectByExpression(whereclause)
+    selection = layer.selectedFeatures()
+    geocode = []
+    for features in selection:
+        coord = (features.geometry().centroid())
+        geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
+
+    # Mettre la valeur de Geocode dans la champ en remplacant les . par des virgules
+    geocode2 = []
+    i = 0
+    for row in geocode:
+        row2 = geocode[i].replace(".", ",")
+        geocode2.append(row2)
+        i += 1
+
+    # Valeur des Y avec 2 decimales
+    geocode3 = []
+    for row in geocode2:
+        strRow = ''.join(row)
+        tags = strRow.split('+')
+        tags3 = str(tags[1]).split(',')
+        if len(tags3[1]) == 1:
+            row2 = tags[0] + "+" + tags[1] + "0"
+            geocode3.append(row2)
+        else:
+            geocode3.append(row)
+
+    # Valeur des X avec 2 decimales et ajout du signe + la ou les X sont positifs
+    geocode4 = []
+    for row in geocode3:
+        strRow = ''.join(row)
+        tags = strRow.split('+')
+
+        string = str(tags[0])
+        substring = "-"
+        tags2 = str(tags[0]).split(',')
+
+        if substring in string:
+            geocode4.append(row)
+        elif len(tags2[1]) == 1:
+            row4 = "+" + tags[0] + "0" + "+" + tags[1]
+            geocode4.append(row4)
+        else:
+            tags[0] = "+" + str(tags[0])
+            row2 = str(tags[0]) + "+" + tags[1]
+            geocode4.append(row2)
+
+    # mettre a jour la selection de la classe dentite avec la la liste geocode4
+    layer_provider = layer.dataProvider()
+    layer.selectByExpression(whereclause)
+    selection = layer.selectedFeatures()
+    layer.startEditing()
+
+    i=0
+    for feature in selection:
+        id = feature.id()
+        # trouver l'index du champ
+        fields = layer.fields()
+        indexChamp = fields.indexFromName(champ)  # Index du champ
+        attr_value = {indexChamp: geocode4[i]}  # Nouvelle valeure
+        layer_provider.changeAttributeValues({id: attr_value})
+        i+=1
+    layer.commitChanges()
+
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
     # gdb = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
     # gpkg = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gpkg"
-    #
+
     # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
 
-    ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
-    champ = 'CDE_CO'
-    ancienneValeure = 'A'
-    nouvelleValeure = 'Z'
+    # ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
+    # champ = 'CDE_CO'
+    # ancienneValeure = 'A'
+    # nouvelleValeure = 'Z'
 
-    updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
+    # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
+
+    ce = "E:/Temp/geotraitement_QGIS/acq4peei_GEOC_FOR.shp"
+    selection = 'GEOC_FOR'
+    # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
+    whereclause= ' \"OBJECTID\" <= 30'
+    # whereclause = ""
+    calculGeocode(ce, selection, whereclause)
+
+
+
