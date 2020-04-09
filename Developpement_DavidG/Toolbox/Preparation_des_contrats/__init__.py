@@ -29,11 +29,11 @@ __copyright__ = '(C) 2020 by David Gauthier - MFFP (DIF)'
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
-    """Load FaireRaccDif class from file FaireRaccDif.
+    """Load preparationContrat class from file preparationContrat.
 
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
     #
-    from .Faire_un_Racc_dif import FaireRaccDifPlugin
-    return FaireRaccDifPlugin()
+    from .preparationContrat import preparationContratPlugin
+    return preparationContratPlugin()

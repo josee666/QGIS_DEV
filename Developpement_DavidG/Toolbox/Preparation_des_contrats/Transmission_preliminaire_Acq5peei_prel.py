@@ -325,7 +325,7 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Transmission preliminaire Acq5peei_prel'
+        return '1 - Transmission préliminaire (Acq5peei_prel)'
 
     def displayName(self):
         """

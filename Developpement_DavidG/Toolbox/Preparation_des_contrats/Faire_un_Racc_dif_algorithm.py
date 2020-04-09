@@ -110,22 +110,22 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
 
         # # J'ai pas acces au reseau, donc je desactive
 
-        # pathStrucShpVide = r"\\Sef1271a\F1271g\OutilsProdDIF\outils\ADG\Preparation_Contrats\prerequis"
-        #
-        # list_racc_dif = [os.path.join(pathStrucShpVide, "Racc_dif.dbf"),
-        #                  os.path.join(pathStrucShpVide, "Racc_dif.prj"),
-        #                  os.path.join(pathStrucShpVide, "Racc_dif.sbn"),
-        #                  os.path.join(pathStrucShpVide, "Racc_dif.sbx"),
-        #                  os.path.join(pathStrucShpVide, "Racc_dif.shp"),
-        #                  os.path.join(pathStrucShpVide, "Racc_dif.shx")]
-        #
-        # for li in list_racc_dif:
-        #     shutil.copy(li, trm_pre_tansfert)
+        pathStrucShpVide = r"\\Sef1271a\F1271g\OutilsProdDIF\outils\ADG\Preparation_Contrats\prerequis"
+
+        list_racc_dif = [os.path.join(pathStrucShpVide, "Racc_dif.dbf"),
+                         os.path.join(pathStrucShpVide, "Racc_dif.prj"),
+                         os.path.join(pathStrucShpVide, "Racc_dif.sbn"),
+                         os.path.join(pathStrucShpVide, "Racc_dif.sbx"),
+                         os.path.join(pathStrucShpVide, "Racc_dif.shp"),
+                         os.path.join(pathStrucShpVide, "Racc_dif.shx")]
+
+        for li in list_racc_dif:
+            shutil.copy(li, trm_pre_tansfert)
 
         newperm5trm = os.path.join(trm_pre_tansfert, "newperm5trm.shp")
-        # Rac_Dif = os.path.join(trm_pre_tansfert, "Racc_Dif_for.shp")
-        # Rac_Dif_loc = os.path.join(trm_pre_tansfert, "Racc_dif.shp")
-        # Rac_Dif_loc_MTM = os.path.join(trm_pre_tansfert, "Racc_dif_MTM.shp")
+
+        Rac_Dif_vide = os.path.join(trm_pre_tansfert, "Racc_dif.shp")
+        Rac_Dif_MTM = os.path.join(trm_pre_tansfert, "Racc_dif_MTM.shp")
         perm5pre_buff = os.path.join(trm_pre_tansfert, "perm5pre_buff.shp")
         dissolve = os.path.join(trm_pre_tansfert, "dissolve.shp")
         ce_for_select = os.path.join(trm_pre_tansfert, "ce_for_select.shp")
@@ -194,7 +194,7 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Faire un Racc dif'
+        return '5 - Faire un Racc dif (optionnel)'
 
     def displayName(self):
         """

@@ -33,8 +33,11 @@ __revision__ = '$Format:%H$'
 from qgis.core import QgsProcessingProvider
 from .Faire_un_Racc_dif_algorithm import FaireRaccDifAlgorithm
 from .Transmission_preliminaire_Acq5peei_prel import TransmissionpreliminaireAcq5peeiprel
+from .Transmission_preliminaire_Acq5peei_prel_2 import TransmissionpreliminaireAcq5peeiprel2
+from .TransmissionPourAppelOffre import TransmissionPourAppelOffre
+from .TransmissionFinale import TransmissionFinale
 
-class FaireRaccDifProvider(QgsProcessingProvider):
+class Provider(QgsProcessingProvider):
 
     def __init__(self):
         """
@@ -55,6 +58,9 @@ class FaireRaccDifProvider(QgsProcessingProvider):
         """
         self.addAlgorithm(FaireRaccDifAlgorithm())
         self.addAlgorithm(TransmissionpreliminaireAcq5peeiprel())
+        self.addAlgorithm(TransmissionpreliminaireAcq5peeiprel2())
+        self.addAlgorithm(TransmissionPourAppelOffre())
+        self.addAlgorithm(TransmissionFinale())
 
         # self.addAlgorithm(MyOtherAlgorithm())
 
