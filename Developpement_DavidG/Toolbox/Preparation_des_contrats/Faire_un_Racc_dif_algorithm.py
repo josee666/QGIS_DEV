@@ -38,7 +38,7 @@ import shutil
 import os
 
 import processing
-from QGIS_commun import conversionFormatVersGDB
+from QGIS_commun import conversionFormatVersGDB, conversionFormatVersGDBCMD
 
 
 class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
@@ -214,6 +214,14 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         processing.run("native:reprojectlayer", {'INPUT':Rac_Dif_vide,
                                                  'TARGET_CRS':QgsCoordinateReferenceSystem(crs),
                                                  'OUTPUT':Racc_dif},feedback=feedback)
+
+
+
+        nomJeuClasseEntite = "TOPO"
+        nomClasseEntite = "CorS5"
+        outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
+
+        conversionFormatVersGDBCMD(Racc_dif,nomJeuClasseEntite,nomClasseEntite,outGDB)
 
 
 

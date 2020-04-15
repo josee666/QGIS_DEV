@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: iso-8859-1
+# coding: UTF-8
 
 
 """
@@ -17,7 +17,7 @@ Courriel: david.gauthier@mffp.gouv.qc.ca
 
 """
 # Historique:
-# 2020-03-22 -CrÈation du QGIS commun
+# 2020-03-22 -Cr√©ation du QGIS commun
 
 from qgis.core import *
 import processing
@@ -28,12 +28,13 @@ from PyQt5.QtCore import QVariant
 from random import randrange
 import os
 from os import path
+import subprocess
 
 
 # # Chemin ou QGIS est installer
 # QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
 #
-# # CrÈer une reference ‡ QgsApplication,
+# # Cr√©er une reference √† QgsApplication,
 # # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
 # qgs = QgsApplication([], False)
 #
@@ -48,11 +49,11 @@ from os import path
 # QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
-    """Permet de transferer une classe d'entitÈ provenant d'une .gdb dans un Geopackage existant ou inexistant'.
+    """Permet de transferer une classe d'entit√© provenant d'une .gdb dans un Geopackage existant ou inexistant'.
             Args:
-                ce : classse d'entitÈ que l'on veut transfÈrer
-                gdb : gdb contenenant les classes d'entitÈs
-                gpkg : gpkg ou la classe d'entitÈ sera transferer
+                ce : classse d'entit√© que l'on veut transf√©rer
+                gdb : gdb contenenant les classes d'entit√©s
+                gpkg : gpkg ou la classe d'entit√© sera transferer
 
 
             Exemples d'appel de la fonction:
@@ -63,7 +64,7 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
             transfererCeGdbToGeoPackage(ce, gdb, gpkg)
     """
 
-    # Classe dentitÈ dans la gdb
+    # Classe dentit√© dans la gdb
     feature = gdb + '|' + 'layername=' + ce
 
     # faire un layer avec la string feature
@@ -76,7 +77,7 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     # Si le Geopackage existe
     if path.isfile(gpkg):
 
-        # J'enleve l'extension car il est crÈÈ plus bas
+        # J'enleve l'extension car il est cr√©√© plus bas
         gpkg = gpkg.replace(".gpkg", "")
         # permet de copier dans un GPKG existant
         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
@@ -84,24 +85,24 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
         options.driverName = 'GPKG'
         options.layerName = ce
 
-        # TransfÈrer la ce de la gdb vers le GeoPackage
+        # Transf√©rer la ce de la gdb vers le GeoPackage
         QgsVectorFileWriter.writeAsVectorFormat(layer, gpkg, options)
 
     # Si le Geopackage n'existe pas
     else:
-        # J'enleve l'extension car il est crÈÈ plus bas
+        # J'enleve l'extension car il est cr√©√© plus bas
         gpkg = gpkg.replace(".gpkg", "")
 
         options.driverName = 'GPKG'
         options.layerName = ce
 
-        # TransfÈrer la ce de la gdb vers le GeoPackage
+        # Transf√©rer la ce de la gdb vers le GeoPackage
         QgsVectorFileWriter.writeAsVectorFormat(layer, gpkg, options)
 
 def updateCursor(ce, champ, valeur, nouvelleValeur):
     """Permet de changer une valeure specifique dans un champ specifique avec une nouvelle valeur'.
                Args:
-                   ce : classe d'entitÈ
+                   ce : classe d'entit√©
                    champ : Nom du champ
                    valeur : valeur que l'on veut modifier dans le champ
                    nouvelleValeur : Nouvelle valeure que l'on veut mettre dans le champ
@@ -138,9 +139,9 @@ def updateCursor(ce, champ, valeur, nouvelleValeur):
 def calculGeocode(ce, champ, whereclause =''):
     """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
                 Args:
-                    ce : classse d'entitÈ ou lon veut calculer un GEOCODE
+                    ce : classse d'entit√© ou lon veut calculer un GEOCODE
                     champ : le champ ou le calcul de GEOCODE sera fait
-                    whereclause : Expression sql pour faire une selection sur la classe d'entitÈ
+                    whereclause : Expression sql pour faire une selection sur la classe d'entit√©
 
                 Exemples d'appel de la fonction:
                 ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
@@ -227,14 +228,14 @@ def calculGeocode(ce, champ, whereclause =''):
 
 def conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
 
-    """Permet de convertir une classe d'entitÈ et la mettre dans une gdb esri avec un jeu de classe d'entitÈ
-         avec une tolerance xy de 0.02m.
+    """Permet de convertir une classe d'entit√© et la mettre dans une gdb esri avec un jeu de classe d'entit√©
+         avec une tolerance xy de 0.02m en utilisant QGIS.
 
                Args:
-                   ce : classe d'entitÈ
-                   nomJeuClasseEntite = nom du jeu de classe d'entitÈ
-                   nomClasseEntite = nom de la classe d'entitÈ en sortie dans la gdb
-                   outGDB = nom de la gdb crÈe
+                   ce : classe d'entit√©
+                   nomJeuClasseEntite = nom du jeu de classe d'entit√©
+                   nomClasseEntite = nom de la classe d'entit√© en sortie dans la gdb
+                   outGDB = nom de la gdb cr√©e
 
                Exemples d'appel de la fonction:
 
@@ -249,6 +250,32 @@ def conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
     processing.run("gdal:convertformat", {'INPUT':ce,
                                           'OPTIONS':'-lco FEATURE_DATASET={0} -lco XYTOLERANCE=0.02 -nln {1}'.format(nomJeuClasseEntite, nomClasseEntite),
                                           'OUTPUT':outGDB})
+
+def conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
+
+    """Permet de convertir une classe d'entit√© et la mettre dans une gdb esri avec un jeu de classe d'entit√©
+         avec une tolerance xy de 0.02m en utilisant en ligne de commande.
+
+               Args:
+                   ce : classe d'entit√©
+                   nomJeuClasseEntite = nom du jeu de classe d'entit√©
+                   nomClasseEntite = nom de la classe d'entit√© en sortie dans la gdb
+                   outGDB = nom de la gdb cr√©e
+
+               Exemples d'appel de la fonction:
+
+               ce = r"C:\MrnMicro\temp\Racc_dif.shp"
+               nomJeuClasseEntite = "TOPO"
+               nomClasseEntite = "CorS5"
+               outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
+
+               conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+        """
+
+    CREATE_NO_WINDOW = 0x08000000
+    cmd = r"""ogr2ogr -f "FileGDB" {3} {0} -lco FEATURE_DATASET={1} -lco XYTOLERANCE=0.02 -nln {2}""".format(ce,nomJeuClasseEntite,nomClasseEntite,outGDB)
+    subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
+
 
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
