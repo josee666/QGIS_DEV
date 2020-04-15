@@ -34,11 +34,18 @@ from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
 import shutil
 import os
+from shutil import ignore_patterns
+from ClassSecurite import Securite_pde
+from PyQt5.QtCore import QVariant
+
+
+from PyQt5.QtCore import QFile, QFileInfo
 
 import processing
 from processing.core.Processing import Processing
 from qgis.analysis import QgsNativeAlgorithms
 host = "Ulysse1"
+import subprocess
 
 class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
     """
@@ -63,6 +70,7 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
 
     INPUT_perm5pre = 'INPUT_perm5pre'
 
+
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
@@ -80,10 +88,7 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
         ###### Parametres ###############################################################################
-        # Perimietre (perm5pre) en paramètre (ex. Dtxp_Carto\trm_pre\2018\09) Nous pouvons récupérer l'année et le fuseau du path
-        # perm5pre = GetParameterAsText(0)
 
-        # Parametres
         # mettre le premier parametre (vector layer) comme input dans un object
         perm5pre = self.parameterAsVectorLayer(parameters, self.INPUT_perm5pre, context)
 
@@ -113,206 +118,185 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
         else:
             pass
 
-        try:
-            # # connection au serveur ulysse1
-            # obj_connec_doff = Securite_pde(environnement_acceptation, genUsername, genPassword, temps_attente=2,host=host)
-            # obj_connec_doff.connect_serveur()
+        # try:
 
-            # Path  ===============================================================
-            path_adg = r"\\{0}\PDE{1}\ADG".format(host, suffix_env)
-            path_adg_EcoForOri_prov = os.path.join(path_adg, "EcoForS5_ORI_Prov")
-            path_adg_ForS5 = os.path.join(path_adg, "ForS5")
-            folder = os.listdir(path_adg_EcoForOri_prov)
-            pathStrucShpVide = r"\\Sef1271a\F1271g\OutilsProdDIF\outils\ADG\Preparation_Contrats\prerequis"
+        # connection au serveur ulysse1
+        obj_connec_doff = Securite_pde(environnement_acceptation, genUsername, genPassword, temps_attente=2,host=host)
+        obj_connec_doff.connect_serveur()
 
-            # trouve le nom de la classe d'entité en arcpy
-            # desc = arcpy.Describe(perm5pre)
-            # valid = desc.name
 
-            # trouve le nom de la classe d'entité en QGIS
-            valid = perm5pre.name()
+        # Path  ===============================================================
+        path_adg = r"\\{0}\PDE{1}\ADG".format(host, suffix_env)
+        path_adg_EcoForOri_prov = os.path.join(path_adg, "EcoForS5_ORI_Prov")
+        folder = os.listdir(path_adg_EcoForOri_prov)
 
-            test = self.parameterDefinition('INPUT_perm5pre').valueAsPythonString(parameters['INPUT_perm5pre'], context)
-            test = test.replace("/Perm5pre.shp", "")
+        # trouve le nom de la classe d'entité en QGIS
+        valid = perm5pre.name()
 
-            if valid != "Perm5pre":
+        if valid != "Perm5pre":
 
-                msg = u"\nERREUR : La couche doit se nommer Perm5pre\n"
-                feedback.reportError(msg)
+            msg = u"\nERREUR : La couche doit se nommer Perm5pre\n"
+            feedback.reportError(msg)
 
+        else:
+
+            ###################################################################################################
+
+            # GDB et shp ===============================================================
+            for f in folder:
+                if (f.startswith("Ass")):
+                    path_adg_EcoForOri_provGDB = os.path.join(f, "EcoFor_Ori_Prov.gdb")
+
+            GDB_EcoForOri = os.path.join(path_adg_EcoForOri_prov, path_adg_EcoForOri_provGDB)
+
+
+            msg = u"\n1. Copie GDB localement"
+            feedback.pushInfo(msg)
+
+            # Copie de la carte ecoforestiere et struture vide
+            if os.path.exists(os.path.join(retrav, "EcoFor_Ori_Prov.gdb")):
+
+                os.remove(os.path.join(retrav, "EcoFor_Ori_Prov.gdb"))
+
+
+            shutil.copytree(GDB_EcoForOri, os.path.join(retrav, "EcoFor_Ori_Prov.gdb"),
+                            ignore=ignore_patterns('*.lock'))
+
+            # GDB ecofor ===============================================================
+            GDB_EcoForOriLoc = os.path.join(retrav, "EcoFor_Ori_Prov.gdb")
+            gpk_EcoForOriLoc = os.path.join(retrav, "EcoFor_Ori_Prov.gpkg")
+
+
+            # msg = u"\n1.1 Transferer le carte ecofor dans un Geopackage"
+            # feedback.pushInfo(msg)
+            #
+            # # Transférer la couche EcoFor_ORI_PROV de EcoFor_Ori_Prov.gdb dans un GeoPackages avec GDAL
+            # CREATE_NO_WINDOW = 0x08000000
+            # cmd = r"""ogr2ogr -f GPKG {0} {1} -t_srs EPSG:32198""".format(gpk_EcoForOriLoc,GDB_EcoForOriLoc)
+            # subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
+
+            # ce Local dans un GeoPackage ou GDB ===============================================================
+            # ceCarteEcofor = "{}|layername=EcoFor_ORI_PROV".format(gpk_EcoForOriLoc)
+            ceCarteEcoforstring = '{}|layername=EcoFor_ORI_PROV'.format(GDB_EcoForOriLoc)
+            Acq5peei_prel = os.path.join(trm_pre_tansfert, "Acq5peei_prel.shp")
+
+            # Faire un layer avec la carte ecofor
+            ceCarteEcofor = QgsVectorLayer(ceCarteEcoforstring, "ceCarteEcofor", "ogr")
+
+
+            # # test ajouter un champ dans une GDB CA MARCHE
+            #
+            # champ = "test"
+            # # permet d'ajouter un champ double
+            # layer_provider = ceCarteEcofor.dataProvider()
+            # layer_provider.addAttributes([QgsField(champ, QVariant.Double)])
+            # ceCarteEcofor.updateFields()
+            #
+
+
+            msg = u"\n2. Creation de la couche Acq5peei_prel"
+            feedback.pushInfo(msg)
+
+            # faire un buffer de 500 m
+            Perm5preBuf = processing.run("native:buffer",
+                                       {'INPUT': perm5pre, 'DISTANCE': 500, 'SEGMENTS': 5,
+                                        'END_CAP_STYLE': 1, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2, 'DISSOLVE': False,
+                                        'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT}, feedback=feedback)["OUTPUT"]
+
+
+            msg = u"\n2.0 Selection dans la carte ecoforestiere"
+            feedback.pushInfo(msg)
+
+            # faire une selection location intersect avec perimetre sur la carte ecofor prov
+            processing.run("native:selectbylocation",
+                       {'INPUT': ceCarteEcofor,
+                        'PREDICATE': [0], 'INTERSECT': Perm5preBuf, 'METHOD': 0}, feedback=feedback)
+
+
+            msg = u"\n2.1 Sauvegarde de la selection"
+            feedback.pushInfo(msg)
+
+            # copier la selection en memoire
+            ce_ecofor_select = processing.run("native:saveselectedfeatures", {'INPUT': ceCarteEcofor, 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                                   feedback=feedback)["OUTPUT"]
+
+            msg = u"\n2.2 Dissolve de la selection"
+            feedback.pushInfo(msg)
+
+            # Un dissolve de ma selection et apres je vais suppirmer les trous a l'interieur du dissolve.
+            dissolve = processing.run("native:dissolve", {'INPUT': ce_ecofor_select, 'FIELD': [], 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                              feedback=feedback)["OUTPUT"]
+
+            # suppirmer les trous a l'interieur du dissolve
+            newPerm5pre = processing.run("native:deleteholes", {'INPUT':dissolve,'MIN_AREA':999999999,'OUTPUT':QgsProcessing.TEMPORARY_OUTPUT},
+                                 feedback=feedback)["OUTPUT"]
+
+            # refaire une selection WITHIN avec le nouveau perimetre pas de trou
+            processing.run("native:selectbylocation", {'INPUT': ceCarteEcofor, 'PREDICATE': [6],'INTERSECT': newPerm5pre, 'METHOD': 0},
+                            feedback=feedback)
+
+            # Copier en .shp la prel localement
+            processing.run("native:saveselectedfeatures", {'INPUT': ceCarteEcofor, 'OUTPUT': Acq5peei_prel},
+                       feedback=feedback)
+
+            #####################################################
+            msg = u"\n3. Projection de la couche"
+            feedback.pushInfo(msg)
+
+            # trouver le path d'une couche en Input dans QGIS (c une string)
+            pathINPUT = self.parameterDefinition('INPUT_perm5pre').valueAsPythonString(parameters['INPUT_perm5pre'], context)
+
+            # Enleve "/Perm5pre.shp" de la string pour avoir seulement le path du shp
+            pathINPUT = pathINPUT.replace("/Perm5pre.shp", "")
+
+            fus = os.path.basename(pathINPUT)
+            fus = fus.replace("'","")
+
+            if fus == '04':
+                proj = 'EPSG:32184'
+            elif fus == '05':
+                proj = 'EPSG:32185'
+            elif fus == '06':
+                proj = 'EPSG:32186'
+            elif fus == '07':
+                proj = 'EPSG:32187'
+            elif fus == '08':
+                proj = 'EPSG:32188'
+            elif fus == '09':
+                proj = 'EPSG:32189'
+            elif fus == '10':
+                proj = 'EPSG:32110'
             else:
+                raise QgsProcessingException("\nLe dossier parent du Perm5pre.shp ne contient pas de # de fuseau\n")
 
-            #   ###################################################################################################
+            # for file in os.listdir(trm_pre_tansfert):
+            #     if file.endswith(".shp"):
+            #         outfc = os.path.join(out, file)
 
-                # GDB et shp ===============================================================
-                for f in folder:
-                    if (f.startswith("Ass")):
-                        path_adg_EcoForOri_provGDB = os.path.join(f, "EcoFor_Ori_Prov.gdb")
+            processing.run("native:reprojectlayer", {'INPUT':Acq5peei_prel,
+                                                             'TARGET_CRS':QgsCoordinateReferenceSystem(proj),
+                                                             'OUTPUT':os.path.join(out, "Acq5peei_prel.shp")},feedback=feedback)
+            trm_pre = pathINPUT
+            trm_pre = trm_pre.replace("'","")
 
-                GDB_EcoForOri = os.path.join(path_adg_EcoForOri_prov, path_adg_EcoForOri_provGDB)
+            msg = u"\n4. Transfert de la couche dans le dossier : {0}".format(trm_pre)
+            feedback.pushInfo(msg)
 
-                # arcpy
-                # desc = arcpy.Describe(perm5pre)
-
-                # # Qgis
-                # # trouver le path d'une couche en Input dans QGIS (c une string)
-                # path_INPUT_perm5pre = self.parameterDefinition('INPUT_perm5pre').valueAsPythonString(
-                #     parameters['INPUT_perm5pre'], context)
-
-                # # Enleve "/Perm5pre.shp" de la string pour avoir seulement le path du shp
-                # path_INPUT_perm5pre = path_INPUT_perm5pre.replace("/Perm5pre.shp", "")
-                #
-                # fus = os.path.basename(path_INPUT_perm5pre)
-                #
-                # if fus == "04":
-                #     gdb = "ForOri456.gdb"
-                # if fus == "05":
-                #     gdb = "ForOri456.gdb"
-                # if fus == "06":
-                #     gdb = "ForOri456.gdb"
-                # if fus == "07":
-                #     gdb = "ForOri07.gdb"
-                # if fus == "08":
-                #     gdb = "ForOri08.gdb"
-                # if fus == "09":
-                #     gdb = "ForOri09.gdb"
-                # if fus == "10":
-                #     gdb = "ForOri10.gdb"
-                #
-                # GDB_ForS5 = os.path.join(path_adg_ForS5, gdb)
-                #
-                # strucShpVideAcq5 = os.path.join(pathStrucShpVide, "Structure_acq5.shp")
-
-                msg = u"\n1. Copie GDB localement"
-                AddMessage(msg)
-
-                # Copie de la carte ecoforestiere et struture vide
-                shutil.copytree(GDB_EcoForOri, os.path.join(retrav, "EcoFor_Ori_Prov.gdb"),
-                                ignore=ignore_patterns('*.lock'))
-
-                # GDB ecofor ===============================================================
-                GDB_EcoForOriLoc = os.path.join(retrav, "EcoFor_Ori_Prov.gdb")
-                gpk_EcoForOriLoc = os.path.join(retrav, "EcoFor_Ori_Prov")
-
-                # Transférer la couche EcoFor_ORI_PROV de EcoFor_Ori_Prov.gdb dans un GeoPackages
-                ceCarteEcofor = os.path.join(retrav, "EcoFor_Ori_Prov.gdb") + '|' + 'layername=' + 'EcoFor_ORI_PROV'
-
-                # faire un layer avec la string ceCarteEcofor
-                layer = QgsVectorLayer(ceCarteEcofor, 'EcoFor_ORI_PROV', 'ogr')
-                options = QgsVectorFileWriter.SaveVectorOptions()
-                options.driverName = 'GPKG'
-                options.layerName = 'EcoFor_ORI_PROV'
-                QgsVectorFileWriter.writeAsVectorFormat(layer, gpk_EcoForOriLoc, options)
+            # copier les données dans le dossier trm_pre
+            for file in os.listdir(out):
+                shutil.copy(os.path.join(out, file), trm_pre)
 
 
-                # # ce Local arcpy ===============================================================
-                # ceCarteEcofor = os.path.join(GDB_EcoForOriLoc, "TOPO", "EcoFor_ORI_PROV")
-                # ceCarteEcoforInterNoGaps = os.path.join(GDB_EcoForOriLoc, "TOPO", "EcoFor_ORI_PROV_InterNoGaps")
-                # ceCarteEcoforInterNoGapsSP = os.path.join(GDB_EcoForOriLoc, "TOPO", "EcoFor_ORI_PROV_InterNoGapsSP")
-                #
-                # Perm5preBuf = os.path.join(GDB_EcoForOriLoc, "TOPO", "Perm4preBuf")
-                # newPerm5pre = os.path.join(GDB_EcoForOriLoc, "TOPO", "newPerm4pre")
-                # Acq5peei_prel = os.path.join(trm_pre_tansfert, "Acq5peei_prel.shp")
+            # TODO marche pas....il me dit acces refusé
+            os.remove(os.path.join(retrav, "EcoFor_Ori_Prov.gdb"))
+            os.rmdir(trm_pre_tansfert)
 
-                # ce Local dans un GeoPackage ===============================================================
-                gpk_EcoForOriLoc = os.path.join(retrav, "EcoFor_Ori_Prov.gpkg")
-                ceCarteEcofor = os.path.join(gpk_EcoForOriLoc, "EcoFor_ORI_PROV")
-                ceCarteEcoforInterNoGaps = os.path.join(gpk_EcoForOriLoc, "EcoFor_ORI_PROV_InterNoGaps")
-                ceCarteEcoforInterNoGapsSP = os.path.join(gpk_EcoForOriLoc, "EcoFor_ORI_PROV_InterNoGapsSP")
-
-                Perm5preBuf = os.path.join(gpk_EcoForOriLoc, "Perm4preBuf")
-                newPerm5pre = os.path.join(gpk_EcoForOriLoc, "newPerm4pre")
-                Acq5peei_prel = os.path.join(trm_pre_tansfert, "Acq5peei_prel.shp")
+            msg = u"\n5. Fin du programme"
+            feedback.pushInfo(msg)
 
 
-                msg = u"\n2. Creation de la couche Acq5peei_prel"
-
-                AddMessage(msg)
-
-                # faire un buffer de 500 m
-                arcpy.Buffer_analysis(in_features=perm5pre, out_feature_class=Perm5preBuf,
-                                      buffer_distance_or_field="500 Meters", line_side="FULL", line_end_type="ROUND",
-                                      dissolve_option="NONE", dissolve_field="", method="PLANAR")
-
-
-
-
-                # Créé un lyr de la carte ecofor
-                lyr_ceCarteEcofor, cnt_ceCarteEcofor = creerlyr(ceCarteEcofor)
-
-                # faire une selection location intersect avec perimetre sur la carte ecofor prov
-                arcpy.SelectLayerByLocation_management(in_layer=lyr_ceCarteEcofor, overlap_type="INTERSECT",
-                                                       select_features=Perm5preBuf, search_distance="",
-                                                       selection_type="NEW_SELECTION",
-                                                       invert_spatial_relationship="NOT_INVERT")
-
-                # faire un union no gaps sur l'extraction (bouche les trous)
-                arcpy.Union_analysis(in_features=lyr_ceCarteEcofor, out_feature_class=ceCarteEcoforInterNoGaps,
-                                     join_attributes="ALL", cluster_tolerance="", gaps="NO_GAPS")
-
-                # Multi part to sp
-                arcpy.MultipartToSinglepart_management(ceCarteEcoforInterNoGaps, ceCarteEcoforInterNoGapsSP)
-
-                # faire un dissolve de l'union pour refaire un nouveau perimetre
-                arcpy.Dissolve_management(in_features=ceCarteEcoforInterNoGapsSP, out_feature_class=newPerm5pre,
-                                          dissolve_field="", statistics_fields="", multi_part="SINGLE_PART",
-                                          unsplit_lines="DISSOLVE_LINES")
-
-                # # faire une selection location intersect -1m avec nouveau perimetre sur la carte ecofor prov
-                # arcpy.SelectLayerByLocation_management(in_layer=lyr_ceCarteEcofor, overlap_type="INTERSECT", select_features=newPerm4pre, search_distance="-1 Meters", selection_type="NEW_SELECTION", invert_spatial_relationship="NOT_INVERT")
-
-                arcpy.SelectLayerByLocation_management(in_layer=lyr_ceCarteEcofor, overlap_type="WITHIN",
-                                                       select_features=newPerm5pre,
-                                                       search_distance="", selection_type="NEW_SELECTION",
-                                                       invert_spatial_relationship="NOT_INVERT")
-
-                # Copier en .shp la prel localement
-                arcpy.CopyFeatures_management(lyr_ceCarteEcofor, Acq5peei_prel)
-
-                #####################################################
-
-                msg = u"\n3. Projection de la couche"
-                AddMessage(msg)
-
-                # exporter les couches en .shp dans la bonne projection MTM
-                desc = arcpy.Describe(perm4pre)
-                fus = os.path.basename(desc.path)
-
-                if fus == "04":
-                    proj = 32184
-                if fus == "05":
-                    proj = 32185
-                if fus == "06":
-                    proj = 32186
-                if fus == "07":
-                    proj = 32187
-                if fus == "08":
-                    proj = 32188
-                if fus == "09":
-                    proj = 32189
-                if fus == "10":
-                    proj = 32190
-
-                for file in os.listdir(trm_pre_tansfert):
-                    if file.endswith(".shp"):
-                        outfc = os.path.join(out, file)
-                        arcpy.Project_management(os.path.join(trm_pre_tansfert, file), outfc, proj)
-
-                trm_pre = desc.path
-                msg = u"\n4. Transfert de la couche dans le dossier : {0}".format(trm_pre)
-                AddMessage(msg)
-
-                # copier les données dans le dossier trm_pre
-                for file in os.listdir(out):
-                    shutil.copy(os.path.join(out, file), trm_pre)
-
-                msg = u"\n5. Fin du programme"
-                AddMessage(msg)
-
-
-        except Exception as e:
-            feedback.reportError(e)
-            raise QgsProcessingException(e)
+        # except Exception as e:
+        #     raise QgsProcessingException(e)
 
 
         return {self.INPUT_perm5pre: 'INPUT_perm5pre'}

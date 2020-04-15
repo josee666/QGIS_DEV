@@ -29,9 +29,9 @@ from random import randrange
 import os
 from os import path
 
-#
+
 # # Chemin ou QGIS est installer
-# QgsApplication.setPrefixPath(r"E:\OSGeo4W64\bin", True)
+# QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
 #
 # # Créer une reference à QgsApplication,
 # # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
@@ -224,6 +224,33 @@ def calculGeocode(ce, champ, whereclause =''):
         i+=1
     layer.commitChanges()
 
+
+def conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
+
+    """Permet de convertir une classe d'entité et la mettre dans une gdb esri avec un jeu de classe d'entité
+         avec une tolerance xy de 0.02m.
+
+               Args:
+                   ce : classe d'entité
+                   nomJeuClasseEntite = nom du jeu de classe d'entité
+                   nomClasseEntite = nom de la classe d'entité en sortie dans la gdb
+                   outGDB = nom de la gdb crée
+
+               Exemples d'appel de la fonction:
+
+               ce = r"C:\MrnMicro\temp\Racc_dif.shp"
+               nomJeuClasseEntite = "TOPO"
+               nomClasseEntite = "CorS5"
+               outGDB = r"C:\MrnMicro\temp\ForOri.db"
+
+               conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+       """
+
+    processing.run("gdal:convertformat", {'INPUT':ce,
+                                          'OPTIONS':'-lco FEATURE_DATASET={0} -lco XYTOLERANCE=0.02 -nln {1}'.format(nomJeuClasseEntite, nomClasseEntite),
+                                          'OUTPUT':outGDB})
+
+
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
     # gdb = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
@@ -240,7 +267,7 @@ if __name__ == '__main__':
 
     ce = "E:/Temp/geotraitement_QGIS/acq4peei_GEOC_FOR.shp"
     selection = 'GEOC_FOR'
-    # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
+    # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
     whereclause= ' \"OBJECTID\" <= 30'
     # whereclause = ""
     calculGeocode(ce, selection, whereclause)

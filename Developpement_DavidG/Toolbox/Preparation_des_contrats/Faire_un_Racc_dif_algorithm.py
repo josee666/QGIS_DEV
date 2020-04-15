@@ -32,12 +32,14 @@ __revision__ = '$Format:%H$'
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
+
+
 import shutil
 import os
 
 import processing
-from processing.core.Processing import Processing
-from qgis.analysis import QgsNativeAlgorithms
+from QGIS_commun import conversionFormatVersGDB
+
 
 class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
     """
@@ -64,6 +66,8 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
     INPUT_FOR = 'INPUT_FOR'
     RAC_DIF = 'RAC_DIF'
 
+
+
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
@@ -87,6 +91,7 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
+
         # Parametres
         # mettre le premier parametre (vector layer) comme input dans un object
         perm5pre = self.parameterAsVectorLayer(parameters, self.INPUT_perm5pre, context)
@@ -108,8 +113,8 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         else:
             pass
 
-        # # J'ai pas acces au reseau, donc je desactive
 
+        # path du raccdif vide avec la bonne structure
         pathStrucShpVide = r"\\Sef1271a\F1271g\OutilsProdDIF\outils\ADG\Preparation_Contrats\prerequis"
 
         list_racc_dif = [os.path.join(pathStrucShpVide, "Racc_dif.dbf"),
@@ -122,69 +127,97 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         for li in list_racc_dif:
             shutil.copy(li, trm_pre_tansfert)
 
-        newperm5trm = os.path.join(trm_pre_tansfert, "newperm5trm.shp")
-
+        # liste des couches
         Rac_Dif_vide = os.path.join(trm_pre_tansfert, "Racc_dif.shp")
-        Rac_Dif_MTM = os.path.join(trm_pre_tansfert, "Racc_dif_MTM.shp")
-        perm5pre_buff = os.path.join(trm_pre_tansfert, "perm5pre_buff.shp")
-        dissolve = os.path.join(trm_pre_tansfert, "dissolve.shp")
-        ce_for_select = os.path.join(trm_pre_tansfert, "ce_for_select.shp")
+
+
 
         ##### RAC_DIFF  #####################
         # faire la zone du Racc_dif, donc un buffer de 500 metre
-        # arcpy.Buffer_analysis(in_features=perm5pre, out_feature_class=perm5pre_buff,
-        #                       buffer_distance_or_field="500 Meters",
-        #                       line_side="FULL", line_end_type="ROUND", dissolve_option="NONE", dissolve_field="",
-        #                       method="PLANAR")
 
-        processing.run("native:buffer",
+        feedback.pushInfo("\n1- Faire le buffer de 500m\n")
+
+        perm5pre_buff = processing.run("native:buffer",
                        {'INPUT': perm5pre, 'DISTANCE': 500, 'SEGMENTS': 5,
                         'END_CAP_STYLE': 1, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2, 'DISSOLVE': False,
-                        'OUTPUT': perm5pre_buff})
+                        'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT}, feedback=feedback)["OUTPUT"]
 
-
-        # lyr_ce_ForS5, cnt_ce_ForS5 = creerlyr(ce_ForS5)
+        feedback.pushInfo("\n2- Selection par location dans le fuseau forestier\n")
 
         # faire une selection location intersect  sur ForS5 pour générer le Racc_dif
-        # arcpy.SelectLayerByLocation_management(in_layer=lyr_ce_ForS5, overlap_type="INTERSECT",
-        #                                        select_features=perm5pre_buff, search_distance="",
-        #                                        selection_type="NEW_SELECTION", invert_spatial_relationship="NOT_INVERT")
-        #
         processing.run("native:selectbylocation",
                        {'INPUT': ce_for,
-                        'PREDICATE': [0], 'INTERSECT': perm5pre_buff, 'METHOD': 0})
+                        'PREDICATE': [0], 'INTERSECT': perm5pre_buff, 'METHOD': 0}, feedback=feedback)
 
-        # # faire un union no gaps sur l'extraction (bouche les trous avec arcpy)
-        # arcpy.Union_analysis(in_features=lyr_ce_ForS5, out_feature_class=Rac_DifNoGaps, join_attributes="ALL",
-        #                      cluster_tolerance="", gaps="NO_GAPS")
 
-        # copier la selection... je ne sais pas encore comment utiliser les couches en memoire encore....
-        processing.run("native:saveselectedfeatures", {'INPUT': ce_for, 'OUTPUT': ce_for_select})
+        # copier la selection en memoire
+        ce_for_select = processing.run("native:saveselectedfeatures", {'INPUT': ce_for, 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                                       feedback=feedback)["OUTPUT"]
 
-        # L'union dans QGIS ne bouche pas les trous comme dans arcpy. Il faut que je le fasse en 2 etape.
+        feedback.pushInfo("\n3- Dissolve de la selection\n")
         # Un dissolve de ma selection et apres je vais suppirmer les trous a l'interieur du dissolve.
-        processing.run("native:dissolve", {'INPUT': ce_for_select, 'FIELD': [], 'OUTPUT': dissolve})
+        dissolve = processing.run("native:dissolve", {'INPUT': ce_for_select, 'FIELD': [], 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                                  feedback=feedback)["OUTPUT"]
 
+        feedback.pushInfo("\n4- Bouche les trous de du dissolve\n")
         # suppirmer les trous a l'interieur du dissolve
-        processing.run("native:deleteholes", {'INPUT':dissolve,'MIN_AREA':999999999,'OUTPUT':newperm5trm})
+        newperm5trm = processing.run("native:deleteholes", {'INPUT':dissolve,'MIN_AREA':999999999,'OUTPUT':QgsProcessing.TEMPORARY_OUTPUT},
+                                     feedback=feedback)["OUTPUT"]
 
-        # arcpy.SelectLayerByLocation_management(in_layer=lyr_ce_ForS5, overlap_type="WITHIN",
-        #                                        select_features=newperm5trm,
-        #                                        search_distance="", selection_type="NEW_SELECTION",
-        #                                        invert_spatial_relationship="NOT_INVERT")
-
+        feedback.pushInfo("\n5- Refaire la selection par location dans le fuseau forestier avec le nouveau perimetre (dissolve)\n")
         # refaire une selection WITHIN avec le nouveau perimetre pas de trou
-        processing.run("native:selectbylocation", {'INPUT': ce_for, 'PREDICATE': [6],
-                                                   'INTERSECT': newperm5trm, 'METHOD': 0})
-        # Copier le racc_dif
-        # arcpy.CopyFeatures_management(lyr_ce_ForS5, Rac_Dif)
-        processing.run("native:saveselectedfeatures", {'INPUT': ce_for, 'OUTPUT': Racc_dif})
+        processing.run("native:selectbylocation", {'INPUT': ce_for, 'PREDICATE': [6],'INTERSECT': newperm5trm, 'METHOD': 0},
+                       feedback=feedback)
+
+        # Mettre un output dans un object pour l'utiliser par la suite
+        output = processing.run("native:saveselectedfeatures", {'INPUT': ce_for, 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                                 feedback=feedback)["OUTPUT"]
+
+        feedback.pushInfo("\n6- Copier la selection dans une couche vide\n")
+        # Faire un append dans une couche vide avec la bonne structure
+        processing.run("Append dans une classe dentité:Append",
+                       {'SOURCE_LAYER':output,
+                        'SOURCE_FIELD':None,'TARGET_LAYER':Rac_Dif_vide,
+                        'TARGET_FIELD':None,'ACTION_ON_DUPLICATE':0},feedback=feedback)
 
 
-        # TODO il reste a mettre le Racc_dif dans la structure vide (officielle) et projeter dans le bon fuseau MTM
+
+        # trouver le path d'une couche en Input dans QGIS (c une string)
+        path_INPUT_perm5pre = self.parameterDefinition('INPUT_perm5pre').valueAsPythonString(
+            parameters['INPUT_perm5pre'], context)
+
+        # Enleve "/Perm5pre.shp" de la string pour avoir seulement le path du shp
+        path_INPUT_perm5pre = path_INPUT_perm5pre.replace("/Perm5pre.shp'", "")
+
+        fus = os.path.basename(path_INPUT_perm5pre)
+        # fus = fus.replace("'","")
+
+        feedback.pushInfo("\n7- Reprojection du Racc_dif dans le fuseau {}".format(fus))
+        if fus == '04':
+            crs = 'EPSG:32184'
+        elif fus == '05':
+            crs = 'EPSG:32185'
+        elif fus == '06':
+            crs = 'EPSG:32186'
+        elif fus == '07':
+            crs = 'EPSG:32187'
+        elif fus == '08':
+            crs = 'EPSG:32188'
+        elif fus == '09':
+            crs = 'EPSG:32189'
+        elif fus == '10':
+            crs = 'EPSG:32110'
+        else:
+           raise QgsProcessingException("\nLe dossier parent du Perm5pre.shp ne contient pas de # de fuseau\n")
 
 
-        return {self.RAC_DIF: 'Racc_dif.shp'}
+        processing.run("native:reprojectlayer", {'INPUT':Rac_Dif_vide,
+                                                 'TARGET_CRS':QgsCoordinateReferenceSystem(crs),
+                                                 'OUTPUT':Racc_dif},feedback=feedback)
+
+
+
+        return {self.RAC_DIF: Racc_dif}
 
     def name(self):
         """

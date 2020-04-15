@@ -33,6 +33,8 @@ __revision__ = '$Format:%H$'
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
 from QGIS_commun import calculGeocode
+import os
+import subprocess
 
 
 class CalculdesGeocodesAlgorithm(QgsProcessingAlgorithm):
@@ -84,7 +86,10 @@ class CalculdesGeocodesAlgorithm(QgsProcessingAlgorithm):
         champ = self.parameterAsString(parameters, self.champ, context)
         whereClause = self.parameterAsString(parameters, self.whereClause, context)
 
+
         calculGeocode(ce, champ, whereClause)
+
+
 
         return {self.INPUT_ce: 'Calcul terminé'}
 

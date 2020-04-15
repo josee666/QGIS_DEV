@@ -34,6 +34,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
 import shutil
 import os
+from ClassSecurite import Securite_pde
 
 import processing
 from processing.core.Processing import Processing
@@ -75,9 +76,596 @@ class TransmissionpreliminaireAcq5peeiprel2(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        environnement_acceptation = False
+
+        if environnement_acceptation is True:
+            suffix_env = 'A'
+            genUsername = 'Intranet\ADL-Sief-DoffD'
+            genPassword = "66uhdf2011feis!"
+        else:
+            suffix_env = ''
+            genUsername = "Intranet\ADL-Sief-DoffP"
+            genPassword = 'RRTuijfeis2011!'
+
+        # Dossier temp
+        retrav = os.getenv('TEMP')
+
+        # Faire un dossier pour les .shp qui seront transférés dans le doissier trm_pre
+        trm_pre_tansfert = os.path.join(retrav, "trm_pre_transfert")
+        out = os.path.join(retrav, "trm_pre_transfert", "MTM")
+        os.makedirs(trm_pre_tansfert)
+        os.makedirs(out)
+
+        try:
+            # connection au serveur ulysse1
+            obj_connec_doff = Securite_pde(environnement_acceptation, genUsername, genPassword,  temps_attente=2, host= host)
+            obj_connec_doff.connect_serveur()
+
+            # Path  ===============================================================
+            path_adg = r"\\{0}\PDE{1}\ADG".format(host, suffix_env)
+            path_adg_EcoForOri_prov = os.path.join (path_adg, "EcoForS5_ORI_Prov")
+            path_adg_ForS5 = os.path.join (path_adg, "ForS5")
+            folder = os.listdir(path_adg_EcoForOri_prov)
+            pathStrucShpVide =  r"\\Sef1271a\F1271g\OutilsProdDIF\outils\ADG\Preparation_Contrats\prerequis"
 
 
-        return {self.INPUT_perm5pre: 'INPUT_perm5pre'}
+
+            ###### Parametres ###############################################################################
+            # Acq5peei_prel en paramètre (ex. Dtxp_Carto\trm_pre\2018\09) Nous pouvons récupérer l'année et le fuseau du path
+
+            Acq5peei_prel_tmp = GetParameterAsText(0)
+
+            desc = arcpy.Describe(Acq5peei_prel_tmp)
+            valid = desc.name
+
+            # Version de programme
+            verPrg = GetParameterAsText(1)
+            AN_PRO_ORI = GetParameterAsText(2)
+
+
+            ###################################################################################################
+
+
+            # GDB et shp ===============================================================
+            # GDB ecofor (j'ai gardé le memem nom de la GDB pour ne pas changé le script ===============================================================
+            GDB_EcoForOriLoc = os.path.join(retrav, "EcoFor_Ori_Prov.gdb")
+            arcpy.CreateFileGDB_management(retrav, "EcoFor_Ori_Prov.gdb", "CURRENT")
+            arcpy.CreateFeatureDataset_management(GDB_EcoForOriLoc, "TOPO", "32198")
+
+            desc = arcpy.Describe(Acq5peei_prel_tmp)
+            # desc = arcpy.Describe(Acq5peei_prel_Etienne)
+            fus = os.path.basename(desc.path)
+
+
+            if fus == "04":
+                gdb = "ForOri456.gdb"
+            if fus == "05":
+                gdb = "ForOri456.gdb"
+            if fus == "06":
+                gdb = "ForOri456.gdb"
+            if fus == "07":
+                gdb = "ForOri07.gdb"
+            if fus == "08":
+                gdb = "ForOri08.gdb"
+            if fus == "09":
+                gdb = "ForOri09.gdb"
+            if fus == "10":
+                gdb = "ForOri10.gdb"
+
+            GDB_ForS5 = os.path.join(path_adg_ForS5, gdb)
+            ce_ForS5 = os.path.join(GDB_ForS5, "TOPO", "ForS5_fus" )
+
+
+            strucShpVideAcq5 = os.path.join(pathStrucShpVide, "Structure_acq5.shp")
+
+
+            msg = u"\n1. Copie des fichiers localement"
+            AddMessage(msg)
+
+            Acq5peei_prel = os.path.join(GDB_EcoForOriLoc, "TOPO", "Acq5peei_prel")
+
+            arcpy.CopyFeatures_management(Acq5peei_prel_tmp, Acq5peei_prel)
+
+
+            #  copie Carte Structure_acq5 et Rac_dif
+            list_Structure_acq5 = [os.path.join(pathStrucShpVide,"Structure_acq5.dbf"), os.path.join(pathStrucShpVide,"Structure_acq5.prj"), os.path.join(pathStrucShpVide,"Structure_acq5.sbn"),
+                                   os.path.join(pathStrucShpVide,"Structure_acq5.sbx"), os.path.join(pathStrucShpVide,"Structure_acq5.shp"), os.path.join(pathStrucShpVide,"Structure_acq5.shx")]
+
+            for li in list_Structure_acq5:
+                shutil.copy(li, trm_pre_tansfert)
+
+            list_racc_dif = [os.path.join(pathStrucShpVide, "Racc_dif.dbf"),
+                             os.path.join(pathStrucShpVide, "Racc_dif.prj"),
+                             os.path.join(pathStrucShpVide, "Racc_dif.sbn"),
+                             os.path.join(pathStrucShpVide, "Racc_dif.sbx"),
+                             os.path.join(pathStrucShpVide, "Racc_dif.shp"),
+                             os.path.join(pathStrucShpVide, "Racc_dif.shx")]
+
+            for li in list_racc_dif:
+                shutil.copy(li, trm_pre_tansfert)
+
+
+
+            # ce Local ===============================================================
+            ceCarteEcofor = os.path.join(GDB_EcoForOriLoc, "TOPO", "EcoFor_ORI_PROV")
+            Rac_Dif_temp = os.path.join(GDB_EcoForOriLoc, "TOPO", "Racc_dif_temp")
+            Rac_Dif_temp_dissolve = os.path.join(GDB_EcoForOriLoc, "TOPO", "Racc_dif_temp_dissolve")
+            Rac_Dif = os.path.join(GDB_EcoForOriLoc, "TOPO", "Racc_dif")
+            strucShpVideAcq5Loc = os.path.join(trm_pre_tansfert,"Structure_acq5.shp")
+            Rac_Dif_loc = os.path.join(trm_pre_tansfert, "Racc_dif.shp")
+
+
+            #######################################################################################################################
+
+            # faire le programme à LPC qui fait la prel2, mais dans notre cas nous allons modifier Acq5peei_prel :
+
+            # COUCHE LOCAL DES ELIMINATE
+
+            v1a = os.path.join(GDB_EcoForOriLoc, "TOPO", "v1a")
+            v1b = os.path.join(GDB_EcoForOriLoc, "TOPO", "v1b")
+            v1c = os.path.join(GDB_EcoForOriLoc, "TOPO", "v1c")
+            v2 = os.path.join(GDB_EcoForOriLoc, "TOPO", "v2")
+            v3 = os.path.join(GDB_EcoForOriLoc, "TOPO", "v3")
+            v4 = os.path.join(GDB_EcoForOriLoc, "TOPO", "v4")
+            v5 =os.path.join(GDB_EcoForOriLoc, "TOPO", "v5")
+            v7a = os.path.join(GDB_EcoForOriLoc, "TOPO", "v7a")
+            v7b = os.path.join(GDB_EcoForOriLoc, "TOPO", "v7b")
+            v7c = os.path.join(GDB_EcoForOriLoc, "TOPO", "v7c")
+            v8a = os.path.join(GDB_EcoForOriLoc, "TOPO", "v8a")
+            v8b = os.path.join(GDB_EcoForOriLoc, "TOPO", "v8b")
+            v8c = os.path.join(GDB_EcoForOriLoc, "TOPO", "v8c")
+            v8d = os.path.join(GDB_EcoForOriLoc, "TOPO", "v8d")
+            v8e = os.path.join(GDB_EcoForOriLoc, "TOPO", "v8e")
+            v9a = os.path.join(GDB_EcoForOriLoc, "TOPO", "v9a")
+            v9b = os.path.join(GDB_EcoForOriLoc, "TOPO", "v9b")
+            v9c = os.path.join(GDB_EcoForOriLoc, "TOPO", "v9c")
+            v10 = os.path.join(GDB_EcoForOriLoc, "TOPO", "v10")
+            Co_ter = os.path.join(GDB_EcoForOriLoc, "TOPO", "Co_ter")
+            v10_pleine = os.path.join(GDB_EcoForOriLoc, "TOPO", "Acq5peei_prel2")
+
+            ratio = 0.1
+
+            msg = u"\n2. Modifier Acq5peei_prel"
+            AddMessage(msg)
+
+            msg = u"\n MODELE 1"
+
+            AddMessage(msg)
+
+            ### MODELE 1
+            arcpy.MakeFeatureLayer_management(Acq5peei_prel, "Acq5peei_prel_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE")
+            arcpy.AddField_management("Acq5peei_prel_Layer", "RATIO_L_A", "DOUBLE", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+            arcpy.CalculateField_management("Acq5peei_prel_Layer", "RATIO_L_A", "!Shape_Length! / !Shape_Area!", "Python", "")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer", "NEW_SELECTION", "RATIO_L_A > {} AND \"ORIGINE\" = 'P' AND \"CL_HAUT\" = ''".format(ratio))
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer", "REMOVE_FROM_SELECTION", "Shape_Area > 8000")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("Acq5peei_prel_Layer", v1a, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'BR', 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPR' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' ) OR CL_HAUT IN ( '1', '2', '3', '4', '5', '6', '7' )", "")
+
+
+            arcpy.MakeFeatureLayer_management(v1a, "Acq5peei_prel_Layer2", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer2", "NEW_SELECTION", "RATIO_L_A > {} AND \"ORIGINE\" = 'P' AND \"CL_HAUT\" = '7'".format(ratio))
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer2", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer2", "REMOVE_FROM_SELECTION", "Shape_Area > 8000")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_Layer2", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("Acq5peei_prel_Layer2", v1b, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'BR', 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPR' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' ) OR CL_HAUT IN ( '1', '2', '3', '4', '5', '6', '' )", "")
+
+            arcpy.MakeFeatureLayer_management(v1b, "Acq5peei_prel_v1b_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1b_Layer", "NEW_SELECTION", "RATIO_L_A > {} AND \"ORIGINE\" = 'P' AND \"CL_HAUT\" = '6'".format(ratio))
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1b_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1b_Layer", "REMOVE_FROM_SELECTION", "Shape_Area > 8000")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1b_Layer", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("Acq5peei_prel_v1b_Layer", v1c, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'BR', 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPR' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' ) OR CL_HAUT IN ( '1', '2', '3', '4', '5', '', '7' )", "")
+
+            arcpy.MakeFeatureLayer_management(v1c, "Acq5peei_prel_v1c_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1c_Layer", "NEW_SELECTION", "RATIO_L_A > {} AND \"ORIGINE\" = 'P' AND \"CL_HAUT\" = '5'".format(ratio))
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1c_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1c_Layer", "REMOVE_FROM_SELECTION", "Shape_Area > 8000")
+            arcpy.SelectLayerByAttribute_management("Acq5peei_prel_v1c_Layer", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("Acq5peei_prel_v1c_Layer", v2, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'BR', 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPR' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' ) OR CL_HAUT IN ( '1', '2', '3', '4', '', '6', '7' )", "")
+
+            msg = u"\n MODELE 2"
+
+            AddMessage(msg)
+
+
+            ### MODÈLE 2
+            arcpy.MakeFeatureLayer_management(v2, "v2_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE")
+            arcpy.CalculateField_management("v2_Layer", "RATIO_L_A", "!Shape_Length! / !Shape_Area!", "Python", "")
+            arcpy.SelectLayerByAttribute_management("v2_Layer", "NEW_SELECTION", "RATIO_L_A > {} AND ORIGINE = 'CPR'".format(ratio))
+            arcpy.SelectLayerByAttribute_management("v2_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("v2_Layer", "REMOVE_FROM_SELECTION", "Shape_Area > 10000")
+            arcpy.SelectLayerByAttribute_management("v2_Layer", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("v2_Layer", v3, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'BR', 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'P' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' )", "")
+
+            msg = u"\n MODELE 3"
+
+            AddMessage(msg)
+
+            ### MODÈLE 3
+            arcpy.MakeFeatureLayer_management(v3, "v3_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE")
+            arcpy.CalculateField_management("v3_Layer", "RATIO_L_A", "!Shape_Length! / !Shape_Area!", "Python", "")
+            arcpy.SelectLayerByAttribute_management("v3_Layer", "NEW_SELECTION", "RATIO_L_A > {} AND ORIGINE = 'CPR'".format(ratio))
+            arcpy.SelectLayerByAttribute_management("v3_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("v3_Layer", "REMOVE_FROM_SELECTION", "Shape_Area > 10000")
+            arcpy.SelectLayerByAttribute_management("v3_Layer", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("v3_Layer", v4, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR \"ORIGINE\" IN ( 'BR', 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' )","")
+
+            msg = u"\n MODELE 4"
+
+            AddMessage(msg)
+
+            ### MODÈLE 4
+            arcpy.MakeFeatureLayer_management(v4, "v4_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE")
+            arcpy.CalculateField_management("v4_Layer", "RATIO_L_A", "!Shape_Length! / !Shape_Area!", "Python", "")
+            arcpy.SelectLayerByAttribute_management("v4_Layer", "NEW_SELECTION", "RATIO_L_A > {} AND ORIGINE = 'BR'".format(ratio))
+            arcpy.SelectLayerByAttribute_management("v4_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ''")
+            arcpy.SelectLayerByAttribute_management("v4_Layer", "REMOVE_FROM_SELECTION", "Shape_Area > 10000")
+            arcpy.SelectLayerByAttribute_management("v4_Layer", "REMOVE_FROM_SELECTION", "PART_STR IN ('LB', 'SC')")
+            arcpy.Eliminate_management("v4_Layer", v5, "AREA", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR \"ORIGINE\" IN ( 'BRD', 'CBA' , 'CDV', 'CEF' , 'CHT' , 'CIF', 'CPH' , 'CPR' , 'CPT' , 'CRB', 'CRR', 'CRS' , 'CS', 'CT' , 'DT' , 'ENS' , 'ES' , 'ETR' , 'FR' , 'P' , 'PRR' , 'REA', 'RIA', 'RPS', 'VER' )","")
+
+            msg = u"\n MODELE 5-6"
+
+            AddMessage(msg)
+
+            ### MODÈLE 5-6
+            arcpy.MakeFeatureLayer_management(v5, "v5_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "\"ORIGINE\" IN ( 'BRD', 'CBA', 'CDV', 'CEF' , 'CIF', 'CPH', 'CPT' , 'CPR' , 'CRB', 'CRR', 'CRS', 'CS', 'CT', 'ETR', 'RPS')")
+            arcpy.CalculateField_management("v5_Layer", "ORIGINE", "\"CPR\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "\"ORIGINE\" IN ('ENS', 'PRR', 'REA', 'RIA')")
+            arcpy.CalculateField_management("v5_Layer", "ORIGINE", "\"P\"", "Python", "")
+
+
+            # Modif ajout RRG 20190723
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "\"PERTURB\" IN ('ENP', 'RR', 'RRG') AND \"AN_ORIGINE\" <> ' '")
+            arcpy.CalculateField_management("v5_Layer", "ORIGINE", "\"P\"", "Python", "")
+
+            # Modif ajout RRG 20190723
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "\"PERTURB\" IN ('ENP', 'RR', 'RRG') AND \"AN_ORIGINE\" = ' '")
+            arcpy.CalculateField_management("v5_Layer", "ORIGINE", "\"P\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "AN_ORIGINE", "!AN_PERTURB!", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "\"PERTURB\" IN ('ENR')")
+            arcpy.CalculateField_management("v5_Layer", "REB_ESS1", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "REB_ESS2", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "REB_ESS3", "\"\"", "Python", "")
+
+
+            # Modif ajout NC, NE 20190723
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "PART_STR IN ('IB', 'TM', 'P', 'NC', 'NE')")
+            arcpy.CalculateField_management("v5_Layer", "PART_STR", "\"\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "CL_HAUT IN ('1', '2', '3', '4')")
+            arcpy.CalculateField_management("v5_Layer", "PERTURB", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "AN_PERTURB", "\"\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "REMOVE_FROM_SELECTION", "ORIGINE = 'P'")
+            arcpy.CalculateField_management("v5_Layer", "ORIGINE", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "AN_ORIGINE", "\"\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "CL_HAUT IN ( ' ' , '7' , '6' , '5' )")
+            arcpy.CalculateField_management("v5_Layer", "PERTURB", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "AN_PERTURB", "\"\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "CO_TER = 'AF'")
+            arcpy.CalculateField_management("v5_Layer", "CO_TER", "\"A\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "CO_TER = 'NF'")
+            arcpy.CalculateField_management("v5_Layer", "CO_TER", "\"ANT\"", "Python", "")
+
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "")
+            arcpy.CalculateField_management("v5_Layer", "CL_PENT", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "DEP_SUR", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "CL_DRAI", "\"\"", "Python", "")
+            arcpy.CalculateField_management("v5_Layer", "TYPE_ECO", "\"\"", "Python", "")
+
+            msg = u"\n MODELE 7-10"
+
+            AddMessage(msg)
+
+            ### MODÈLE 7-10
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = 'P' AND CL_HAUT = ' '")
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v5_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v5_Layer", v7a, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'CPR' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR CL_HAUT IN( '1' , '2' , '3' , '4' , '5' , '6' , '7' )","")
+
+            arcpy.MakeFeatureLayer_management(v7a, "v7a_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v7a_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = 'P' AND \"CL_HAUT\" = '7'")
+            arcpy.SelectLayerByAttribute_management("v7a_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v7a_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v7a_Layer", v7b, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'CPR' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR')  OR CL_HAUT IN ( '', '1', '2', '3', '4', '5', '6' )","")
+
+            arcpy.MakeFeatureLayer_management(v7b, "v7b_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v7b_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = 'P' AND CL_HAUT = '6'")
+            arcpy.SelectLayerByAttribute_management("v7b_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v7b_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v7b_Layer", v7c, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'CPR' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR CL_HAUT IN('', '1', '2', '3', '4', '5', '7' )","")
+
+            arcpy.MakeFeatureLayer_management(v7c, "v7c_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v7c_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = 'P' AND CL_HAUT = '5'")
+            arcpy.SelectLayerByAttribute_management("v7c_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v7c_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v7c_Layer", v8a, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'CPR' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR CL_HAUT IN ( '', '1', '2', '3', '4', '6', '7' )","")
+
+            arcpy.MakeFeatureLayer_management(v8a, "v8a_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v8a_Layer", "NEW_SELECTION", "Shape_Area < 10001 AND ORIGINE = 'CPR' AND CL_HAUT = ''")
+            arcpy.SelectLayerByAttribute_management("v8a_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v8a_Layer", "REMOVE_FROM_SELECTION", "\"PART_STR\" = 'LB'")
+            arcpy.Eliminate_management("v8a_Layer", v8b, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'P' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR  CL_HAUT IN ( '1', '2', '3', '4', '5', '6', '7' )","")
+
+            arcpy.MakeFeatureLayer_management(v8b, "v8b_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v8b_Layer", "NEW_SELECTION", "Shape_Area < 10001 AND ORIGINE = 'CPR' AND CL_HAUT = '7'")
+            arcpy.SelectLayerByAttribute_management("v8b_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v8b_Layer", "REMOVE_FROM_SELECTION", "\"PART_STR\" = 'LB'")
+            arcpy.Eliminate_management("v8b_Layer", v8c, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'P' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR  CL_HAUT IN ( '1', '2', '3', '4', '5', '6', '' )","")
+
+            arcpy.MakeFeatureLayer_management(v8c, "v8c_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_Length_12_13_14_15 Shape_Length_12_13_14_15 VISIBLE NONE;Shape_Area_12_13_14_15 Shape_Area_12_13_14_15 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v8c_Layer", "NEW_SELECTION", "Shape_Area < 10001 AND ORIGINE = 'CPR' AND CL_HAUT = '6'")
+            arcpy.SelectLayerByAttribute_management("v8c_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v8c_Layer", "REMOVE_FROM_SELECTION", "\"PART_STR\" = 'LB'")
+            arcpy.Eliminate_management("v8c_Layer", v8d, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'P' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR  CL_HAUT IN ( '1', '2', '3', '4', '5', '', '7' )","")
+
+            arcpy.MakeFeatureLayer_management(v8d, "v8d_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_Length_12_13_14_15 Shape_Length_12_13_14_15 VISIBLE NONE;Shape_Area_12_13_14_15 Shape_Area_12_13_14_15 VISIBLE NONE;Shape_Length_12_13_14_15_16 Shape_Length_12_13_14_15_16 VISIBLE NONE;Shape_Area_12_13_14_15_16 Shape_Area_12_13_14_15_16 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v8d_Layer", "NEW_SELECTION", "Shape_Area < 10001 AND ORIGINE = 'CPR' AND CL_HAUT = '5'")
+            arcpy.SelectLayerByAttribute_management("v8d_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v8d_Layer", "REMOVE_FROM_SELECTION", "\"PART_STR\" = 'LB'")
+            arcpy.Eliminate_management("v8d_Layer", v8e, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO' ) OR ORIGINE IN ( 'P' , '', 'DT' , 'BR' , 'CHT' , 'ES', 'VER', 'FR') OR  CL_HAUT IN ( '1', '2', '3', '4', '', '6', '7' )","")
+
+            arcpy.MakeFeatureLayer_management(v8e, "v8e_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_Length_12_13_14_15 Shape_Length_12_13_14_15 VISIBLE NONE;Shape_Area_12_13_14_15 Shape_Area_12_13_14_15 VISIBLE NONE;Shape_Length_12_13_14_15_16 Shape_Length_12_13_14_15_16 VISIBLE NONE;Shape_Area_12_13_14_15_16 Shape_Area_12_13_14_15_16 VISIBLE NONE;Shape_Length_12_13_14_15_16_17 Shape_Length_12_13_14_15_16_17 VISIBLE NONE;Shape_Area_12_13_14_15_16_17 Shape_Area_12_13_14_15_16_17 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v8e_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = '' AND \"CL_HAUT\" = '1'")
+            arcpy.SelectLayerByAttribute_management("v8e_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v8e_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v8e_Layer", v9a, "LENGTH", "CO_TER IN ('A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO') OR ORIGINE IN ('CHT' , 'CPR' , 'ES' , 'P' , 'DT', 'VER', 'FR', 'BR') OR CL_HAUT IN ('', '2', '3', '4', '5', '6', '7')","")
+
+            arcpy.MakeFeatureLayer_management(v9a, "v9a_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_Length_12_13_14_15 Shape_Length_12_13_14_15 VISIBLE NONE;Shape_Area_12_13_14_15 Shape_Area_12_13_14_15 VISIBLE NONE;Shape_Length_12_13_14_15_16 Shape_Length_12_13_14_15_16 VISIBLE NONE;Shape_Area_12_13_14_15_16 Shape_Area_12_13_14_15_16 VISIBLE NONE;Shape_Length_12_13_14_15_16_17 Shape_Length_12_13_14_15_16_17 VISIBLE NONE;Shape_Area_12_13_14_15_16_17 Shape_Area_12_13_14_15_16_17 VISIBLE NONE;Shape_Length_12_13_14_15_16_17_18 Shape_Length_12_13_14_15_16_17_18 VISIBLE NONE;Shape_Area_12_13_14_15_16_17_18 Shape_Area_12_13_14_15_16_17_18 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v9a_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = '' AND \"CL_HAUT\" = '2'")
+            arcpy.SelectLayerByAttribute_management("v9a_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v9a_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v9a_Layer", v9b, "LENGTH", "CO_TER IN ( 'A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO') OR ORIGINE IN ('CHT' , 'CPR' , 'ES' , 'P' , 'DT', 'VER', 'FR', 'BR') OR CL_HAUT IN ('1', '', '3', '4', '5', '6', '7')","")
+
+            arcpy.MakeFeatureLayer_management(v9b, "v9b_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_Length_12_13_14_15 Shape_Length_12_13_14_15 VISIBLE NONE;Shape_Area_12_13_14_15 Shape_Area_12_13_14_15 VISIBLE NONE;Shape_Length_12_13_14_15_16 Shape_Length_12_13_14_15_16 VISIBLE NONE;Shape_Area_12_13_14_15_16 Shape_Area_12_13_14_15_16 VISIBLE NONE;Shape_Length_12_13_14_15_16_17 Shape_Length_12_13_14_15_16_17 VISIBLE NONE;Shape_Area_12_13_14_15_16_17 Shape_Area_12_13_14_15_16_17 VISIBLE NONE;Shape_Length_12_13_14_15_16_17_18 Shape_Length_12_13_14_15_16_17_18 VISIBLE NONE;Shape_Area_12_13_14_15_16_17_18 Shape_Area_12_13_14_15_16_17_18 VISIBLE NONE;Shape_Length_12_13_14_15_16_17_18_19 Shape_Length_12_13_14_15_16_17_18_19 VISIBLE NONE;Shape_Area_12_13_14_15_16_17_18_19 Shape_Area_12_13_14_15_16_17_18_19 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v9b_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = '' AND \"CL_HAUT\" = '3'")
+            arcpy.SelectLayerByAttribute_management("v9b_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v9b_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v9b_Layer", v9c, "LENGTH", "CO_TER IN ('A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO') OR ORIGINE IN ('CHT' , 'CPR' , 'ES' , 'P' , 'DT', 'VER', 'FR', 'BR') OR CL_HAUT IN ('1', '2', '', '4', '5', '6', '7')","")
+
+            arcpy.MakeFeatureLayer_management(v9c, "v9c_Layer", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE;Shape_Length_1 Shape_Length_1 VISIBLE NONE;Shape_Area_1 Shape_Area_1 VISIBLE NONE;Shape_Length_12 Shape_Length_12 VISIBLE NONE;Shape_Area_12 Shape_Area_12 VISIBLE NONE;Shape_Length_12_13 Shape_Length_12_13 VISIBLE NONE;Shape_Area_12_13 Shape_Area_12_13 VISIBLE NONE;Shape_Length_12_13_14 Shape_Length_12_13_14 VISIBLE NONE;Shape_Area_12_13_14 Shape_Area_12_13_14 VISIBLE NONE;Shape_Length_12_13_14_15 Shape_Length_12_13_14_15 VISIBLE NONE;Shape_Area_12_13_14_15 Shape_Area_12_13_14_15 VISIBLE NONE;Shape_Length_12_13_14_15_16 Shape_Length_12_13_14_15_16 VISIBLE NONE;Shape_Area_12_13_14_15_16 Shape_Area_12_13_14_15_16 VISIBLE NONE;Shape_Length_12_13_14_15_16_17 Shape_Length_12_13_14_15_16_17 VISIBLE NONE;Shape_Area_12_13_14_15_16_17 Shape_Area_12_13_14_15_16_17 VISIBLE NONE;Shape_Length_12_13_14_15_16_17_18 Shape_Length_12_13_14_15_16_17_18 VISIBLE NONE;Shape_Area_12_13_14_15_16_17_18 Shape_Area_12_13_14_15_16_17_18 VISIBLE NONE;Shape_Length_12_13_14_15_16_17_18_19 Shape_Length_12_13_14_15_16_17_18_19 VISIBLE NONE;Shape_Area_12_13_14_15_16_17_18_19 Shape_Area_12_13_14_15_16_17_18_19 VISIBLE NONE;Shape_Length_12_13_14_15_16_17_18_19_20 Shape_Length_12_13_14_15_16_17_18_19_20 VISIBLE NONE;Shape_Area_12_13_14_15_16_17_18_19_20 Shape_Area_12_13_14_15_16_17_18_19_20 VISIBLE NONE;Shape_length Shape_length VISIBLE NONE;Shape_area Shape_area VISIBLE NONE")
+            arcpy.SelectLayerByAttribute_management("v9c_Layer", "NEW_SELECTION", "Shape_Area < 8001 AND ORIGINE = '' AND \"CL_HAUT\" = '4'")
+            arcpy.SelectLayerByAttribute_management("v9c_Layer", "REMOVE_FROM_SELECTION", "CO_TER <> ' '")
+            arcpy.SelectLayerByAttribute_management("v9c_Layer", "REMOVE_FROM_SELECTION", "PART_STR = 'LB'")
+            arcpy.Eliminate_management("v9c_Layer", v10, "LENGTH", "CO_TER IN ('A' , 'AF' , 'AL' , 'ANT' , 'DH' , 'DS' , 'EAU' , 'GR' , 'ILE' , 'INO' , 'LTE' , 'NF' , 'RO') OR ORIGINE IN ('CHT' , 'CPR' , 'ES' , 'P' , 'DT', 'VER', 'FR', 'BR') OR CL_HAUT IN ('1', '2', '3', '', '5', '6', '7')","")
+
+            # Il faut sortir les CO_TER avant de faire le Dissolve. De cette facon, nous perderons pas les limities de feuillets dans les COTER
+            # arcpy.MakeFeatureLayer_management(v10, "v10_dissolve", "", "", "OBJECTID OBJECTID VISIBLE NONE;Shape Shape VISIBLE NONE;ORIGINE ORIGINE VISIBLE NONE;AN_ORIGINE AN_ORIGINE VISIBLE NONE;PERTURB PERTURB VISIBLE NONE;AN_PERTURB AN_PERTURB VISIBLE NONE;TYPE_COUV1 TYPE_COUV1 VISIBLE NONE;ET1_AGE ET1_AGE VISIBLE NONE;ET1_DENS ET1_DENS VISIBLE NONE;ET1_HAUT ET1_HAUT VISIBLE NONE;ET1_ESS1 ET1_ESS1 VISIBLE NONE;ET1_PC1 ET1_PC1 VISIBLE NONE;ET1_ESS2 ET1_ESS2 VISIBLE NONE;ET1_PC2 ET1_PC2 VISIBLE NONE;ET1_ESS3 ET1_ESS3 VISIBLE NONE;ET1_PC3 ET1_PC3 VISIBLE NONE;ET1_ESS4 ET1_ESS4 VISIBLE NONE;ET1_PC4 ET1_PC4 VISIBLE NONE;ET1_ESS5 ET1_ESS5 VISIBLE NONE;ET1_PC5 ET1_PC5 VISIBLE NONE;ET1_ESS6 ET1_ESS6 VISIBLE NONE;ET1_PC6 ET1_PC6 VISIBLE NONE;ET1_ESS7 ET1_ESS7 VISIBLE NONE;ET1_PC7 ET1_PC7 VISIBLE NONE;TYPE_COUV2 TYPE_COUV2 VISIBLE NONE;ET2_AGE ET2_AGE VISIBLE NONE;ET2_DENS ET2_DENS VISIBLE NONE;ET2_HAUT ET2_HAUT VISIBLE NONE;ET2_ESS1 ET2_ESS1 VISIBLE NONE;ET2_PC1 ET2_PC1 VISIBLE NONE;ET2_ESS2 ET2_ESS2 VISIBLE NONE;ET2_PC2 ET2_PC2 VISIBLE NONE;ET2_ESS3 ET2_ESS3 VISIBLE NONE;ET2_PC3 ET2_PC3 VISIBLE NONE;ET2_ESS4 ET2_ESS4 VISIBLE NONE;ET2_PC4 ET2_PC4 VISIBLE NONE;ET2_ESS5 ET2_ESS5 VISIBLE NONE;ET2_PC5 ET2_PC5 VISIBLE NONE;ET2_ESS6 ET2_ESS6 VISIBLE NONE;ET2_PC6 ET2_PC6 VISIBLE NONE;ET2_ESS7 ET2_ESS7 VISIBLE NONE;ET2_PC7 ET2_PC7 VISIBLE NONE;REB_ESS1 REB_ESS1 VISIBLE NONE;REB_ESS2 REB_ESS2 VISIBLE NONE;REB_ESS3 REB_ESS3 VISIBLE NONE;ET_DOMI ET_DOMI VISIBLE NONE;PHOTOINTER PHOTOINTER VISIBLE NONE;PART_STR PART_STR VISIBLE NONE;TYPE_COUV TYPE_COUV VISIBLE NONE;GR_ESS GR_ESS VISIBLE NONE;CL_DENS CL_DENS VISIBLE NONE;CL_HAUT CL_HAUT VISIBLE NONE;CL_AGE CL_AGE VISIBLE NONE;CL_PENT CL_PENT VISIBLE NONE;DEP_SUR DEP_SUR VISIBLE NONE;CL_DRAI CL_DRAI VISIBLE NONE;TYPE_ECO TYPE_ECO VISIBLE NONE;CO_TER CO_TER VISIBLE NONE;SREG_ECO SREG_ECO VISIBLE NONE;MET_AT_STR MET_AT_STR VISIBLE NONE;MET_PROD MET_PROD VISIBLE NONE;PRO_SOU PRO_SOU VISIBLE NONE;NOACQ_PEE NOACQ_PEE VISIBLE NONE;NOTE_DIF NOTE_DIF VISIBLE NONE;NOTE_PREST NOTE_PREST VISIBLE NONE;RATIO_L_A RATIO_L_A VISIBLE NONE;Shape_Length Shape_Length VISIBLE NONE;Shape_Area Shape_Area VISIBLE NONE")
+            lyr_v10, cnt_v10 = creerlyr(v10)
+            arcpy.SelectLayerByAttribute_management(lyr_v10, "NEW_SELECTION", "CO_TER <> ' '")
+
+            arcpy.CopyFeatures_management (lyr_v10, Co_ter)
+            arcpy.DeleteFeatures_management(lyr_v10)
+
+            arcpy.Dissolve_management(lyr_v10, v10_pleine, "ORIGINE;AN_ORIGINE;PERTURB;AN_PERTURB;TYPE_COUV1;ET1_AGE;ET1_DENS;"
+                                                           "ET1_HAUT;ET1_ESS1;ET1_PC1;ET1_ESS2;"
+                                                           "ET1_PC2;ET1_ESS3;ET1_PC3;ET1_ESS4;"
+                                                           "ET1_PC4;ET1_ESS5;ET1_PC5;ET1_ESS6;ET1_PC6;"
+                                                           "ET1_ESS7;ET1_PC7;TYPE_COUV2;ET2_AGE;ET2_DENS;"
+                                                           "ET2_HAUT;ET2_ESS1;ET2_PC1;ET2_ESS2;ET2_PC2;"
+                                                           "ET2_ESS3;ET2_PC3;ET2_ESS4;ET2_PC4;ET2_ESS5;ET2_PC5;"
+                                                           "ET2_ESS6;ET2_PC6;ET2_ESS7;ET2_PC7;REB_ESS1;REB_ESS2;"
+                                                           "REB_ESS3;ET_DOMI;PHOTOINTER;PART_STR;TYPE_COUV;GR_ESS;"
+                                                           "CL_DENS;CL_HAUT;CL_AGE;CL_PENT;DEP_SUR;CL_DRAI;TYPE_ECO;"
+                                                           "CO_TER;SREG_ECO;NO_PRG", "", "SINGLE_PART", "DISSOLVE_LINES")
+
+
+
+
+            arcpy.Append_management(Co_ter, v10_pleine, "NO_TEST")
+
+            Acq5peei_prel2 = v10_pleine
+
+
+            ###### Fin du programme à LPC #######################################################################################
+
+
+            msg = u"\n3. Création de la couche finale Acq5peei_prel2.shp"
+            AddMessage(msg)
+
+            # Ajouter les champs
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="NOACQ_PEE", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="20", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="NOTE_DIF", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="254", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="NOTE_PREST", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="254", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="VER_PRG", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="10", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="DENS_LIDAR", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="2", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="HAUT_LIDAR", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="2", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="STRU_LIDAR", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="2", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+            arcpy.AddField_management(in_table=Acq5peei_prel2, field_name="AGE_MAJF", field_type="TEXT", field_precision="",
+                                      field_scale="", field_length="3", field_alias="", field_is_nullable="NULLABLE",
+                                      field_is_required="NON_REQUIRED", field_domain="")
+
+
+            # Calculer le VER_PRG
+            arcpy.CalculateField_management(in_table=Acq5peei_prel2, field="VER_PRG", expression=verPrg, expression_type="PYTHON", code_block="")
+
+
+            # Calculer l'AGE_MAJF
+            fields = ["AN_ORIGINE", "AGE_MAJF"]
+            where_clause = "AN_ORIGINE <> ' '"
+            with arcpy.da.UpdateCursor(Acq5peei_prel2, fields, where_clause) as cursor:
+                for row in cursor:
+                    row[1] = int(AN_PRO_ORI) - int(row[0])
+                    cursor.updateRow(row)
+
+
+            #Blanchir An_Origine
+            arcpy.CalculateField_management(in_table=Acq5peei_prel2, field="AN_ORIGINE", expression='""', expression_type="PYTHON", code_block="")
+
+
+            delFld = ["CL_PENT", "DEP_SUR", "CL_DRAI", "TYPE_ECO"]
+
+            # Supprimer les champs de l'écologie
+            arcpy.DeleteField_management(Acq5peei_prel2, delFld)
+
+
+            # Remplacer les "Null" par des blancs avant le append dans le .shp
+            fields = arcpy.ListFields(Acq5peei_prel2)
+            for fld in fields:
+                with arcpy.da.UpdateCursor(in_table=Acq5peei_prel2, field_names=fld.name) as cursor:
+                    for row in cursor:
+                        if row[0] == None:
+                            row[0] = ""
+                            cursor.updateRow(row)
+
+            del row
+            del cursor
+
+            # Mettre Acq5peei_prel dans une structure vide de .shp
+            arcpy.Append_management(Acq5peei_prel2, strucShpVideAcq5Loc, "NO_TEST", "", "")
+            arcpy.Rename_management(strucShpVideAcq5Loc, os.path.join(trm_pre_tansfert, "Acq5peei_prel2"))
+
+
+            msg = u"\n4. Création du Racc_dif"
+            AddMessage(msg)
+
+
+            # TODO utiliser la methode de l'outil 5 de la boite
+
+            ##### RAC_DIFF  #####################
+            # faire la zone du Racc_dif select NO_PRG = 5
+            clause = "NO_PRG = '5'"
+            lyr_Acq5peei_prel, cnt_Acq5peei_prel = creerlyr(Acq5peei_prel2, clause)
+            arcpy.CopyFeatures_management(lyr_Acq5peei_prel, Rac_Dif_temp)
+
+            # faire un dissolve pour utiliser lors de selection du Racc_dif dans ForS5
+            arcpy.Dissolve_management(in_features=Rac_Dif_temp, out_feature_class=Rac_Dif_temp_dissolve, dissolve_field="", statistics_fields="", multi_part="SINGLE_PART", unsplit_lines="DISSOLVE_LINES")
+
+            lyr_ce_ForS5, cnt_ce_ForS5 = creerlyr(ce_ForS5)
+
+                                    # Voir avec Yvan pour le largeur du raccdif... faire une selection location intersect -1m sur ForS5 pour générer le Racc_dif
+            arcpy.SelectLayerByLocation_management(in_layer=lyr_ce_ForS5, overlap_type="INTERSECT",
+                                                   select_features=Rac_Dif_temp_dissolve, search_distance="-1 Meters",
+                                                   selection_type="NEW_SELECTION", invert_spatial_relationship="NOT_INVERT")
+
+
+            Rac_DifNoGaps =os.path.join(GDB_EcoForOriLoc, "TOPO", "Rac_DifNoGaps")
+            Rac_DifNoGapsSP =os.path.join(GDB_EcoForOriLoc, "TOPO", "Rac_DifNoGapsSP")
+            newperm5trm =os.path.join(GDB_EcoForOriLoc, "TOPO", "newperm5trm")
+
+
+            # faire un union no gaps sur l'extraction (bouche les trous)
+            arcpy.Union_analysis(in_features=lyr_ce_ForS5, out_feature_class=Rac_DifNoGaps, join_attributes="ALL", cluster_tolerance="", gaps="NO_GAPS")
+
+            # Multi part to sp
+            arcpy.MultipartToSinglepart_management(Rac_DifNoGaps, Rac_DifNoGapsSP)
+
+            # faire un dissolve de l'union pour refaire un nouveau perimetre
+            arcpy.Dissolve_management(in_features=Rac_DifNoGapsSP, out_feature_class=newperm5trm, dissolve_field="", statistics_fields="", multi_part="SINGLE_PART", unsplit_lines="DISSOLVE_LINES")
+
+            arcpy.SelectLayerByAttribute_management(lyr_ce_ForS5, "CLEAR_SELECTION")
+
+
+            arcpy.SelectLayerByLocation_management(in_layer=lyr_ce_ForS5, overlap_type="WITHIN", select_features=newperm5trm,
+                                                   search_distance="", selection_type="NEW_SELECTION", invert_spatial_relationship="NOT_INVERT")
+
+
+            arcpy.CopyFeatures_management(lyr_ce_ForS5, Rac_Dif)
+
+            lyr_Rac_Dif,cnt_Rac_Dif =  creerlyr(Rac_Dif)
+
+            if cnt_Rac_Dif == 0:
+                arcpy.Delete_management(Rac_Dif)
+
+
+            # Remplacer les "Null" par des blancs avant le append dans le .shp
+            fields = arcpy.ListFields(Rac_Dif)
+            for fld in fields:
+                with arcpy.da.UpdateCursor(in_table=Rac_Dif, field_names=fld.name) as cursor:
+                    for row in cursor:
+                        if row[0] == None:
+                            row[0] = ""
+                            cursor.updateRow(row)
+
+
+
+            # Mettre Rac_Dif dans une structure vide de .shp
+            arcpy.Append_management(Rac_Dif, Rac_Dif_loc, "NO_TEST", "", "")
+
+
+            #####################################################
+
+
+            msg = u"\n5. Projection des couches"
+            AddMessage(msg)
+
+            # # exporter les couches en .shp dans la bonne projection MTM
+            # desc = arcpy.Describe(Acq5peei_prel_tmp)
+            # fus = os.path.basename(desc.path)
+
+            if fus == "04":
+                proj = 32184
+            if fus == "05":
+                proj = 32185
+            if fus == "06":
+                proj = 32186
+            if fus == "07":
+                proj = 32187
+            if fus == "08":
+                proj = 32188
+            if fus == "09":
+                proj = 32189
+            if fus == "10":
+                proj = 32190
+
+            for file in os.listdir(trm_pre_tansfert):
+                if file.endswith(".shp"):
+                    outfc = os.path.join(out, file)
+                    arcpy.Project_management(os.path.join(trm_pre_tansfert, file), outfc, proj)
+
+            Racc_dif_MTM = os.path.join(out,"Racc_dif.shp")
+
+            # Calculer le NOACQ_PEE du racc dif
+            arcpy.CalculateField_management(in_table=Racc_dif_MTM, field="NOACQ_PEE", expression=""""DIF_" & [FID]+1""",
+                                            expression_type="VB", code_block="")
+
+            trm_pre = desc.path
+            msg = u"\n6. Transfert des couches dans le dossier : {0}".format(trm_pre)
+            AddMessage(msg)
+
+            # copier les données dans le dossier trm_pre
+            for file in os.listdir(out):
+                shutil.copy(os.path.join(out, file), trm_pre)
+
+
+            msg = u"\n7. Fin du programme"
+            AddMessage(msg)
+
+            return {self.INPUT_perm5pre: 'INPUT_perm5pre'}
+
+
+        except Exception as e:
+            raise QgsProcessingException(e)
+
+
 
     def name(self):
         """
