@@ -241,15 +241,14 @@ def conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
                ce = r"C:\MrnMicro\temp\Racc_dif.shp"
                nomJeuClasseEntite = "TOPO"
                nomClasseEntite = "CorS5"
-               outGDB = r"C:\MrnMicro\temp\ForOri.db"
+               outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
 
                conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
-       """
+        """
 
     processing.run("gdal:convertformat", {'INPUT':ce,
                                           'OPTIONS':'-lco FEATURE_DATASET={0} -lco XYTOLERANCE=0.02 -nln {1}'.format(nomJeuClasseEntite, nomClasseEntite),
                                           'OUTPUT':outGDB})
-
 
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
