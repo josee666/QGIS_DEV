@@ -291,12 +291,33 @@ if __name__ == '__main__':
 
     # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
 
-    ce = "E:/Temp/geotraitement_QGIS/acq4peei_GEOC_FOR.shp"
-    selection = 'GEOC_FOR'
-    # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
-    whereclause= ' \"OBJECTID\" <= 30'
-    # whereclause = ""
-    calculGeocode(ce, selection, whereclause)
+    # ce = "E:/Temp/geotraitement_QGIS/acq4peei_GEOC_FOR.shp"
+    # selection = 'GEOC_FOR'
+    # # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
+    # whereclause= ' \"OBJECTID\" <= 30'
+    # # whereclause = ""
+    # calculGeocode(ce, selection, whereclause)
 
 
+    # //JM add
+
+        
+    # # Chemin ou QGIS est installer
+    QgsApplication.setPrefixPath(r"C:\OSGeo4W\bin", True)
+    #
+    # # Créer une reference à QgsApplication,
+    # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+    qgs = QgsApplication([], False)
+    #
+    # # initialiser QGIS
+    qgs.initQgis()
+    #
+    # # Initialiser les outils qgis
+    Processing.initialize()
+
+    try:
+        ce = "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/reg_eco.shp"
+        conversionFormatVersGDB(ce, "nomJeuClasseEntite", "nomClasseEntite", "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/outGDB.gdb")
+    except Exception as e:
+        print(e)
 
