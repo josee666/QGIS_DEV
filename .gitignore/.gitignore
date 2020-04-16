@@ -3,6 +3,9 @@
 # Edit at https://www.gitignore.io/?templates=pycharm,visualstudiocode
 ## JM ajout
 .idea/
+.idea
+.idea/*
+*.idea
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
