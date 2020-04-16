@@ -298,15 +298,12 @@ if __name__ == '__main__':
     # # whereclause = ""
     # calculGeocode(ce, selection, whereclause)
 
-
-    # //JM add
-
-        
-    # # Chemin ou QGIS est installer
+    ### jm add
+    # QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
     QgsApplication.setPrefixPath(r"C:\OSGeo4W\bin", True)
-    #
+#
     # # Créer une reference à QgsApplication,
-    # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+    # # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
     qgs = QgsApplication([], False)
     #
     # # initialiser QGIS
@@ -315,9 +312,6 @@ if __name__ == '__main__':
     # # Initialiser les outils qgis
     Processing.initialize()
 
-    try:
-        ce = "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/reg_eco.shp"
-        conversionFormatVersGDB(ce, "nomJeuClasseEntite", "nomClasseEntite", "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/outGDB.gdb")
-    except Exception as e:
-        print(e)
+    ce = "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/reg_eco.shp"
+    conversionFormatVersGDB(ce, "nomJeuClasseEntite", "nomClasseEntite", "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/outGDB.gdb")
 
