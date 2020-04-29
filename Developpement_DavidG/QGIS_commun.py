@@ -31,22 +31,22 @@ from os import path
 import subprocess
 
 
-# # Chemin ou QGIS est installer
-# QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
-#
-# # Créer une reference à QgsApplication,
-# # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
-# qgs = QgsApplication([], False)
-#
-# # initialiser QGIS
-# qgs.initQgis()
-#
-# # Initialiser les outils qgis
-# Processing.initialize()
-#
-# # Permet d'utiliser les algorithmes "natif" ecrit en c++
-# # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
-# QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+# Chemin ou QGIS est installer
+QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
+
+# Créer une reference à QgsApplication,
+# Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+qgs = QgsApplication([], False)
+
+# initialiser QGIS
+qgs.initQgis()
+
+# Initialiser les outils qgis
+Processing.initialize()
+
+# Permet d'utiliser les algorithmes "natif" ecrit en c++
+# https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
+QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     """Permet de transferer une classe d'entité provenant d'une .gdb dans un Geopackage existant ou inexistant'.
@@ -269,13 +269,64 @@ def conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
                nomClasseEntite = "CorS5"
                outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
 
-               conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+               conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
         """
 
     CREATE_NO_WINDOW = 0x08000000
-    cmd = r"""ogr2ogr -f "FileGDB" {3} {0} -lco FEATURE_DATASET={1} -lco XYTOLERANCE=0.02 -nln {2}""".format(ce,nomJeuClasseEntite,nomClasseEntite,outGDB)
+    cmd = r"""ogr2ogr -f "FileGDB" {3} {0} -t_srs EPSG:32198 -lco FEATURE_DATASET={1} -lco XYTOLERANCE=0.02 -nln {2}""".format(ce,nomJeuClasseEntite,nomClasseEntite,outGDB)
     subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
 
+def identifyNarrowPolygon(ce, ceNarrow):
+
+    """
+     Version BETA 20200429. J'aimerais enlever les 2 premiers et 2 derniers vertex du Centreligne
+
+     Permet de recréer l'algorithme de ESRI 'identifyNarrowPolygon' permettant de couper les polygones ayant des retrecissements (Appendices)
+     de moins de 20 metre.
+
+               Args:
+                   ce : classe d'entité
+                   ceNarrow = sortie avec les polygones coupés
+
+
+               Exemples d'appel de la fonction:
+
+               ce = r"C:\MrnMicro\temp\ecofor.shp"
+               ceNarrow = r"C:\MrnMicro\temp\ecoforNarrow.shp"
+
+               identifyNarrowPolygon(ce, ceNarrow)
+        """
+
+    # Faire le centre ligne
+    CL = processing.run("grass7:v.voronoi.skeleton", {'input':ce,
+                                                 'smoothness':0.25,'thin':-1,'-a':False,'-s':True,'-l':False,'-t':False,
+                                                 'output':QgsProcessing.TEMPORARY_OUTPUT,'GRASS_REGION_PARAMETER':None,
+                                                 'GRASS_SNAP_TOLERANCE_PARAMETER':-1,'GRASS_MIN_AREA_PARAMETER':0,
+                                                 'GRASS_OUTPUT_TYPE_PARAMETER':0,'GRASS_VECTOR_DSCO':'','GRASS_VECTOR_LCO':'',
+                                                 'GRASS_VECTOR_EXPORT_NOCAT':False})["OUTPUT"]
+
+
+    # generaliser le CL car il y a trop de vertex
+    CLgene = processing.run("grass7:v.generalize", {'input':CL,'type':[0,1,2],
+                                           'cats':'','where':'','method':0,'threshold':1,'look_ahead':7,'reduction':50,'slide':0.5,
+                                           'angle_thresh':3,'degree_thresh':0,'closeness_thresh':0,'betweeness_thresh':0,'alpha':1,
+                                           'beta':1,'iterations':1,'-t':True,'-l':True,
+                                           'output':QgsProcessing.TEMPORARY_OUTPUT,'error':'TEMPORARY_OUTPUT',
+                                           'GRASS_REGION_PARAMETER':None,'GRASS_SNAP_TOLERANCE_PARAMETER':-1,
+                                           'GRASS_MIN_AREA_PARAMETER':0.0001,'GRASS_OUTPUT_TYPE_PARAMETER':0,
+                                           'GRASS_VECTOR_DSCO':'','GRASS_VECTOR_LCO':'','GRASS_VECTOR_EXPORT_NOCAT':False})["OUTPUT"]
+
+
+
+    # Faire des transects de 10m  de chaque coté du sommet perpendiculaire au CL
+    transect = processing.run("native:transect", {'INPUT':CLgene,
+                                       'LENGTH':10,'ANGLE':90,'SIDE':2,'OUTPUT':QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
+
+
+    # Coupe les polygones avec les transect de 20 m qui traverse completement les polynones ecoforestiers.
+    processing.run("native:splitwithlines", {'INPUT':ce,
+                                             'LINES':transect,
+                                             'OUTPUT':ceNarrow})
 
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
@@ -298,20 +349,17 @@ if __name__ == '__main__':
     # # whereclause = ""
     # calculGeocode(ce, selection, whereclause)
 
-    ### jm add
-    # QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
-    QgsApplication.setPrefixPath(r"C:\OSGeo4W\bin", True)
-#
-    # # Créer une reference à QgsApplication,
-    # # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
-    qgs = QgsApplication([], False)
-    #
-    # # initialiser QGIS
-    qgs.initQgis()
-    #
-    # # Initialiser les outils qgis
-    Processing.initialize()
 
-    ce = "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/reg_eco.shp"
-    conversionFormatVersGDB(ce, "nomJeuClasseEntite", "nomClasseEntite", "C:/job/data/CLASSI_ECO_GDB/CLASSI_ECO_GDB/reg_eco/outGDB.gdb")
 
+    # ce = r"C:\MrnMicro\temp\Racc_dif.shp"
+    # nomJeuClasseEntite = "TOPO"
+    # nomClasseEntite = "CorS5"
+    # outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
+    #
+    # cmd = r"""ogr2ogr -f "FileGDB" C:\MrnMicro\temp\ForOri.gdb C:\MrnMicro\temp\Racc_dif.shp -lco FEATURE_DATASET=TOPO -lco XYTOLERANCE=0.02 -nln CorS5"""
+    # subprocess.call(cmd)
+    # conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+    ce = r"C:\MrnMicro\temp\Appendice2020\sub.shp"
+    ceNarrow = r"C:\MrnMicro\temp\Appendice2020\subNarrow.shp"
+
+    identifyNarrowPolygon(ce, ceNarrow)
