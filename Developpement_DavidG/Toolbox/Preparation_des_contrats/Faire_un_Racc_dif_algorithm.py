@@ -38,7 +38,7 @@ import shutil
 import os
 
 import processing
-from QGIS_commun import conversionFormatVersGDB, conversionFormatVersGDBCMD
+from QGIS_commun import conversionFormatVersGDB, conversionFormatVersGDBCMD,identifyNarrowPolygon
 
 
 class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
@@ -216,12 +216,11 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
                                                  'OUTPUT':Racc_dif},feedback=feedback)
 
 
+        ce = r"C:\MrnMicro\temp\Appendice2020\sub.shp"
+        ceNarrow = r"C:\MrnMicro\temp\Appendice2020\subNarrow.shp"
 
-        nomJeuClasseEntite = "TOPO"
-        nomClasseEntite = "CorS5"
-        outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
+        identifyNarrowPolygon(ce, ceNarrow)
 
-        conversionFormatVersGDBCMD(Racc_dif,nomJeuClasseEntite,nomClasseEntite,outGDB)
 
 
 

@@ -30,9 +30,13 @@ import os
 from os import path
 import subprocess
 
+# Pour faire marcher GRASS en StandAlone script
+# https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
+from processing.algs.grass7.Grass7Utils import Grass7Utils
+Grass7Utils.checkGrassIsInstalled()
 
 # Chemin ou QGIS est installer
-QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
+QgsApplication.setPrefixPath(r"C:\MrnMicro\OSGeo4W64\bin", True)
 
 # Créer une reference à QgsApplication,
 # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
@@ -47,6 +51,10 @@ Processing.initialize()
 # Permet d'utiliser les algorithmes "natif" ecrit en c++
 # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
 QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+
+
+
+
 
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
     """Permet de transferer une classe d'entité provenant d'une .gdb dans un Geopackage existant ou inexistant'.
@@ -296,37 +304,45 @@ def identifyNarrowPolygon(ce, ceNarrow):
 
                identifyNarrowPolygon(ce, ceNarrow)
         """
+    # Dossier temp
+    retrav = os.getenv('TEMP')
+
+    # couches intermediaires
+    CL = os.path.join(retrav, "CL.shp")
+    CLgene = os.path.join(retrav, "CLgene.shp")
+    transect = os.path.join(retrav, "transect.shp")
+
 
     # Faire le centre ligne
-    CL = processing.run("grass7:v.voronoi.skeleton", {'input':ce,
-                                                 'smoothness':0.25,'thin':-1,'-a':False,'-s':True,'-l':False,'-t':False,
-                                                 'output':QgsProcessing.TEMPORARY_OUTPUT,'GRASS_REGION_PARAMETER':None,
-                                                 'GRASS_SNAP_TOLERANCE_PARAMETER':-1,'GRASS_MIN_AREA_PARAMETER':0,
-                                                 'GRASS_OUTPUT_TYPE_PARAMETER':0,'GRASS_VECTOR_DSCO':'','GRASS_VECTOR_LCO':'',
-                                                 'GRASS_VECTOR_EXPORT_NOCAT':False})["OUTPUT"]
+    processing.run("grass7:v.voronoi.skeleton", {'input':ce, 'smoothness':0.25,'thin':-1,'-a':False,
+                                                      '-s':True,'-l':False,'-t':False,'output':CL,
+                                                      'GRASS_REGION_PARAMETER':None,'GRASS_SNAP_TOLERANCE_PARAMETER':-1,
+                                                      'GRASS_MIN_AREA_PARAMETER':0,'GRASS_OUTPUT_TYPE_PARAMETER':0,
+                                                      'GRASS_VECTOR_DSCO':'','GRASS_VECTOR_LCO':'','GRASS_VECTOR_EXPORT_NOCAT':False})
+
+
 
 
     # generaliser le CL car il y a trop de vertex
-    CLgene = processing.run("grass7:v.generalize", {'input':CL,'type':[0,1,2],
+    processing.run("grass7:v.generalize", {'input':CL,'type':[0,1,2],
                                            'cats':'','where':'','method':0,'threshold':1,'look_ahead':7,'reduction':50,'slide':0.5,
                                            'angle_thresh':3,'degree_thresh':0,'closeness_thresh':0,'betweeness_thresh':0,'alpha':1,
                                            'beta':1,'iterations':1,'-t':True,'-l':True,
-                                           'output':QgsProcessing.TEMPORARY_OUTPUT,'error':'TEMPORARY_OUTPUT',
+                                           'output':CLgene,'error':'TEMPORARY_OUTPUT',
                                            'GRASS_REGION_PARAMETER':None,'GRASS_SNAP_TOLERANCE_PARAMETER':-1,
                                            'GRASS_MIN_AREA_PARAMETER':0.0001,'GRASS_OUTPUT_TYPE_PARAMETER':0,
-                                           'GRASS_VECTOR_DSCO':'','GRASS_VECTOR_LCO':'','GRASS_VECTOR_EXPORT_NOCAT':False})["OUTPUT"]
-
+                                           'GRASS_VECTOR_DSCO':'','GRASS_VECTOR_LCO':'','GRASS_VECTOR_EXPORT_NOCAT':False})
 
 
     # Faire des transects de 10m  de chaque coté du sommet perpendiculaire au CL
-    transect = processing.run("native:transect", {'INPUT':CLgene,
-                                       'LENGTH':10,'ANGLE':90,'SIDE':2,'OUTPUT':QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
-
+    processing.run("native:transect", {'INPUT':CLgene,
+                                       'LENGTH':10,'ANGLE':90,'SIDE':2,'OUTPUT':transect})
 
     # Coupe les polygones avec les transect de 20 m qui traverse completement les polynones ecoforestiers.
     processing.run("native:splitwithlines", {'INPUT':ce,
                                              'LINES':transect,
                                              'OUTPUT':ceNarrow})
+
 
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
@@ -351,7 +367,7 @@ if __name__ == '__main__':
 
 
 
-    # ce = r"C:\MrnMicro\temp\Racc_dif.shp"
+    # ce = r"C:\MrnMicro\temp\Appendice2020\sub.shp"
     # nomJeuClasseEntite = "TOPO"
     # nomClasseEntite = "CorS5"
     # outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
@@ -363,3 +379,4 @@ if __name__ == '__main__':
     ceNarrow = r"C:\MrnMicro\temp\Appendice2020\subNarrow.shp"
 
     identifyNarrowPolygon(ce, ceNarrow)
+
