@@ -172,6 +172,7 @@ def calculGeocode(ce, champ, whereclause =''):
 
         for features in feat:
 
+
             # coord = (features.geometry().centroid())
             coord = (features.geometry().pointOnSurface())
 
