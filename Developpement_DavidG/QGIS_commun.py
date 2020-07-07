@@ -31,28 +31,27 @@ from os import path
 import subprocess
 
 
-
-# Pour faire marcher GRASS en StandAlone script
-# https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
-from processing.algs.grass7.Grass7Utils import Grass7Utils
-Grass7Utils.checkGrassIsInstalled()
-
-# Chemin ou QGIS est installer
-QgsApplication.setPrefixPath(r"C:\MrnMicro\OSGeo4W64\bin", True)
-
-# Créer une reference à QgsApplication,
-# Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
-qgs = QgsApplication([], False)
-
-# initialiser QGIS
-qgs.initQgis()
-
-# Initialiser les outils qgis
-Processing.initialize()
-
-# Permet d'utiliser les algorithmes "natif" ecrit en c++
-# https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
-QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+# # Pour faire marcher GRASS en StandAlone script
+# # https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
+# from processing.algs.grass7.Grass7Utils import Grass7Utils
+# Grass7Utils.checkGrassIsInstalled()
+#
+# # Chemin ou QGIS est installer
+# QgsApplication.setPrefixPath(r"C:\MrnMicro\OSGeo4W64\bin", True)
+#
+# # Créer une reference à QgsApplication,
+# # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+# qgs = QgsApplication([], False)
+#
+# # initialiser QGIS
+# qgs.initQgis()
+#
+# # Initialiser les outils qgis
+# Processing.initialize()
+#
+# # Permet d'utiliser les algorithmes "natif" ecrit en c++
+# # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
+# QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
@@ -157,9 +156,6 @@ def calculGeocode(ce, champ, whereclause =''):
 
                 calculGeocode(ce, champ, whereclause)
         """
-    # Si pas de clause, je selectionne tout les objectid de la couche
-    if whereclause == '':
-        whereclause = ' \"OBJECTID\" is not null'
 
     # Verifie si 'ce' est une string ou deja un vectorlayer de QGIS
     if isinstance(ce, str):
@@ -167,13 +163,32 @@ def calculGeocode(ce, champ, whereclause =''):
     else:
         layer = ce
 
+    # index = len(list(layer.getFeatures()))
 
-    layer.selectByExpression(whereclause)
-    selection = layer.selectedFeatures()
-    geocode = []
-    for features in selection:
-        coord = (features.geometry().centroid())
-        geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
+    # Si pas de clause
+    if whereclause == '':
+        feat = layer.getFeatures()
+        geocode = []
+
+        for features in feat:
+
+            # coord = (features.geometry().centroid())
+            coord = (features.geometry().pointOnSurface())
+
+            geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
+
+    else:
+
+        layer.selectByExpression(whereclause)
+        selection = layer.selectedFeatures()
+        geocode = []
+        for features in selection:
+
+            # coord = (features.geometry().centroid())
+            coord = (features.geometry().pointOnSurface())
+
+            geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
+
 
     # Mettre la valeur de Geocode dans la champ en remplacant les . par des virgules
     geocode2 = []
@@ -182,6 +197,7 @@ def calculGeocode(ce, champ, whereclause =''):
         row2 = geocode[i].replace(".", ",")
         geocode2.append(row2)
         i += 1
+
 
     # Valeur des Y avec 2 decimales
     geocode3 = []
@@ -194,6 +210,7 @@ def calculGeocode(ce, champ, whereclause =''):
             geocode3.append(row2)
         else:
             geocode3.append(row)
+
 
     # Valeur des X avec 2 decimales et ajout du signe + la ou les X sont positifs
     geocode4 = []
@@ -215,14 +232,24 @@ def calculGeocode(ce, champ, whereclause =''):
             row2 = str(tags[0]) + "+" + tags[1]
             geocode4.append(row2)
 
+
     # mettre a jour la selection de la classe dentite avec la la liste geocode4
+
     layer_provider = layer.dataProvider()
-    layer.selectByExpression(whereclause)
-    selection = layer.selectedFeatures()
-    layer.startEditing()
+    if whereclause == '':
+
+        feat = layer.getFeatures()
+        layer.startEditing()
+
+    else:
+
+        layer.selectByExpression(whereclause)
+        feat = layer.selectedFeatures()
+        layer.startEditing()
+
 
     i=0
-    for feature in selection:
+    for feature in feat:
         id = feature.id()
         # trouver l'index du champ
         fields = layer.fields()
@@ -230,8 +257,8 @@ def calculGeocode(ce, champ, whereclause =''):
         attr_value = {indexChamp: geocode4[i]}  # Nouvelle valeure
         layer_provider.changeAttributeValues({id: attr_value})
         i+=1
-    layer.commitChanges()
 
+    layer.commitChanges()
 
 def conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
 
@@ -349,7 +376,7 @@ def identifyNarrowPolygon(ce, ceNarrow):
 def separerJeuClasseEntite(ce, reptrav, x, y, ESPG = 32198):
 
     """
-     Permet de de faire des jeux de données avec a partir d'une classe d'entité avec une grill de X metre (x) par X metre (y).
+     Permet de de faire des jeux de données a partir d'une classe d'entité avec une grille de X metre (x) par X metre (y).
      Le résultat sera des tuiles numérotés dans un GEOPACKAGE nommé "JeuClasseEntite.gpkg" situé dans le dossier de travail que vous aurez choisi.
      La grille est en projection en Quebec Lambert (32198). Donc, si votre classe d'entité a un autre projection il faut defenir le ESPG
 
@@ -469,12 +496,13 @@ if __name__ == '__main__':
 
     # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
 
-    # ce = "E:/Temp/geotraitement_QGIS/acq4peei_GEOC_FOR.shp"
-    # selection = 'GEOC_FOR'
-    # # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
+    ce = "C:/MrnMicro/temp/acq5peei_transmis_vol01_2.shp"
+    selection = 'GEOCODE'
+    # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
     # whereclause= ' \"OBJECTID\" <= 30'
-    # # whereclause = ""
-    # calculGeocode(ce, selection, whereclause)
+    # whereclause=' \"VER_PRG\"  = "AIPF2019"'
+    whereclause = ""
+    calculGeocode(ce, selection, whereclause)
 
 
 
@@ -501,8 +529,8 @@ if __name__ == '__main__':
     # tempsTot = datetime.datetime.now() - debut
     # print("temps pour la durée du traitement: {}".format(tempsTot))
 
-    x = 100000
-    y = 100000
-    ce = "C:/MrnMicro/temp/Appendice2020/ce_ecofor_territoire_a_taiter.shp"
-    reptrav = r"C:\MrnMicro\temp"
-    separerJeuClasseEntite(ce, reptrav, x, y)
+    # x = 100000
+    # y = 100000
+    # ce = "C:/MrnMicro/temp/Appendice2020/ce_ecofor_territoire_a_taiter.shp"
+    # reptrav = r"C:\MrnMicro\temp"
+    # separerJeuClasseEntite(ce, reptrav, x, y)
