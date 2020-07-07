@@ -216,12 +216,6 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
                                                  'OUTPUT':Racc_dif},feedback=feedback)
 
 
-        ce = r"C:\MrnMicro\temp\Appendice2020\sub.shp"
-        ceNarrow = r"C:\MrnMicro\temp\Appendice2020\subNarrow.shp"
-
-        identifyNarrowPolygon(ce, ceNarrow)
-
-
 
 
         return {self.RAC_DIF: Racc_dif}
