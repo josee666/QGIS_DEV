@@ -257,6 +257,7 @@ def calculGeocodeOLD(ce, champ, whereclause =''):
     layer.commitChanges()
 
 def calculGeocode(ce, champ, whereclause =''):
+
     """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
                 Args:
                     ce : classse d'entité ou lon veut calculer un GEOCODE
@@ -316,7 +317,12 @@ def calculGeocode(ce, champ, whereclause =''):
         tags2 = str(tags[0]).split(',')
 
         if substring in string:
-            pass
+            if len(tags2[1]) == 1:
+                row4 = tags[0] + "0" + "+" + tags[1]
+                geocode[i] = row4
+            else:
+                pass
+
         elif len(tags2[1]) == 1:
             row4 = "+" + tags[0] + "0" + "+" + tags[1]
             geocode[i] = row4
@@ -326,10 +332,9 @@ def calculGeocode(ce, champ, whereclause =''):
             geocode[i] = row2
 
 
-    # mettre a jour la selection de la classe dentite avec la la liste geocode4
+    # mettre a jour de la classe dentite avec la la liste geocode
     layer_provider = layer.dataProvider()
     if whereclause == '':
-
         feat = layer.getFeatures()
         layer.startEditing()
     else:
@@ -586,8 +591,9 @@ if __name__ == '__main__':
 
     # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
 
-    ce = "C:/MrnMicro/temp/acq5peei_transmis_vol01_2.shp"
-    selection = 'NOTE_PREST'
+    ce = "C:/MrnMicro/temp/Export_Output.shp"
+    # ce ="C:/MrnMicro/temp/EcoForS5_Ori_Prov.gdb|layername=EcoForS5_ORI_PROV"
+    selection = 'GEOCODE'
     # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
     # whereclause= ' \"OBJECTID\" <= 30'
     # whereclause=' \"VER_PRG\"  = "AIPF2019"'
