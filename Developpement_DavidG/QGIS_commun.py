@@ -142,7 +142,7 @@ def updateCursor(ce, champ, valeur, nouvelleValeur):
             layer_provider.changeAttributeValues({id: attr_value})
         layer.commitChanges()
 
-def calculGeocode(ce, champ, whereclause =''):
+def calculGeocodeOLD(ce, champ, whereclause =''):
     """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
                 Args:
                     ce : classse d'entité ou lon veut calculer un GEOCODE
@@ -172,10 +172,8 @@ def calculGeocode(ce, champ, whereclause =''):
 
         for features in feat:
 
-
             # coord = (features.geometry().centroid())
             coord = (features.geometry().pointOnSurface())
-
             geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
 
     else:
@@ -187,7 +185,6 @@ def calculGeocode(ce, champ, whereclause =''):
 
             # coord = (features.geometry().centroid())
             coord = (features.geometry().pointOnSurface())
-
             geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
 
 
@@ -198,7 +195,6 @@ def calculGeocode(ce, champ, whereclause =''):
         row2 = geocode[i].replace(".", ",")
         geocode2.append(row2)
         i += 1
-
 
     # Valeur des Y avec 2 decimales
     geocode3 = []
@@ -235,7 +231,6 @@ def calculGeocode(ce, champ, whereclause =''):
 
 
     # mettre a jour la selection de la classe dentite avec la la liste geocode4
-
     layer_provider = layer.dataProvider()
     if whereclause == '':
 
@@ -260,6 +255,100 @@ def calculGeocode(ce, champ, whereclause =''):
         i+=1
 
     layer.commitChanges()
+
+def calculGeocode(ce, champ, whereclause =''):
+    """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
+                Args:
+                    ce : classse d'entité ou lon veut calculer un GEOCODE
+                    champ : le champ ou le calcul de GEOCODE sera fait
+                    whereclause : Expression sql pour faire une selection sur la classe d'entité
+
+                Exemples d'appel de la fonction:
+                ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
+                champ = 'GEOCODE' ou'GEOC_FOR' ou 'GEOC_MAJ' etc... (il faut que le champ existe)
+                whereclause(optionnel) = "\"GES_CO\" = 'ENEN'"
+
+                calculGeocode(ce, champ, whereclause)
+        """
+
+    # Verifie si 'ce' est une string ou deja un vectorlayer de QGIS
+    if isinstance(ce, str):
+        layer = QgsVectorLayer(ce, 'lyr', 'ogr')
+    else:
+        layer = ce
+
+    # Si pas de clause
+    if whereclause == '':
+        feat = layer.getFeatures()
+        geocode = []
+
+        for features in feat:
+            coord = (features.geometry().pointOnSurface())
+            geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
+    else:
+
+        layer.selectByExpression(whereclause)
+        selection = layer.selectedFeatures()
+        geocode = []
+        for features in selection:
+            coord = (features.geometry().pointOnSurface())
+            geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
+
+    # Mettre la valeur de Geocode dans la champ en remplacant les . par des virgules
+    for i in range(len(geocode)):
+        row2 = geocode[i].replace(".", ",")
+        geocode[i] = row2
+
+        # Valeur des Y avec 2 decimales
+        strRow = ''.join(geocode[i])
+        tags = strRow.split('+')
+        tags3 = str(tags[1]).split(',')
+        if len(tags3[1]) == 1:
+            row2 = tags[0] + "+" + tags[1] + "0"
+            geocode[i] = row2
+
+    for i in range(len(geocode)):
+        strRow = ''.join(geocode[i])
+        tags = strRow.split('+')
+        # Valeur des X avec 2 decimales et ajout du signe + la ou les X sont positifs
+        string = str(tags[0])
+        substring = "-"
+        tags2 = str(tags[0]).split(',')
+
+        if substring in string:
+            pass
+        elif len(tags2[1]) == 1:
+            row4 = "+" + tags[0] + "0" + "+" + tags[1]
+            geocode[i] = row4
+        else:
+            tags[0] = "+" + str(tags[0])
+            row2 = str(tags[0]) + "+" + tags[1]
+            geocode[i] = row2
+
+
+    # mettre a jour la selection de la classe dentite avec la la liste geocode4
+    layer_provider = layer.dataProvider()
+    if whereclause == '':
+
+        feat = layer.getFeatures()
+        layer.startEditing()
+    else:
+        layer.selectByExpression(whereclause)
+        feat = layer.selectedFeatures()
+        layer.startEditing()
+
+    i=0
+    for feature in feat:
+        id = feature.id()
+        # trouver l'index du champ
+        fields = layer.fields()
+        indexChamp = fields.indexFromName(champ)  # Index du champ
+        attr_value = {indexChamp: geocode[i]}  # Nouvelle valeure
+        layer_provider.changeAttributeValues({id: attr_value})
+        i+=1
+    layer.commitChanges()
+
+
 
 def conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
 
@@ -498,7 +587,7 @@ if __name__ == '__main__':
     # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
 
     ce = "C:/MrnMicro/temp/acq5peei_transmis_vol01_2.shp"
-    selection = 'GEOCODE'
+    selection = 'NOTE_PREST'
     # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
     # whereclause= ' \"OBJECTID\" <= 30'
     # whereclause=' \"VER_PRG\"  = "AIPF2019"'
