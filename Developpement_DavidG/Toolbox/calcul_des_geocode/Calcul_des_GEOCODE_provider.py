@@ -32,7 +32,8 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
 from .Calcul_des_GEOCODE_algorithm import CalculdesGeocodesAlgorithm
-
+import os
+from qgis.PyQt.QtGui import QIcon
 
 class CalculdesGeocodesProvider(QgsProcessingProvider):
 
@@ -75,11 +76,18 @@ class CalculdesGeocodesProvider(QgsProcessingProvider):
         return self.tr('Calcul des GEOCODE')
 
     def icon(self):
-        """
-        Should return a QIcon which is used for your provider inside
-        the Processing toolbox.
-        """
-        return QgsProcessingProvider.icon(self)
+
+        return QIcon(os.path.dirname(__file__) + '/image/Geocode.png')
+    #
+    #
+    #
+    #
+    # def icon(self):
+    #     """
+    #     Should return a QIcon which is used for your provider inside
+    #     the Processing toolbox.
+    #     """
+    #     return QgsProcessingProvider.icon(self)
 
     def longName(self):
         """

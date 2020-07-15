@@ -34,7 +34,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
 from QGIS_commun import calculGeocode
 import os
-import subprocess
+from qgis.PyQt.QtGui import QIcon
 
 
 class CalculdesGeocodesAlgorithm(QgsProcessingAlgorithm):
@@ -101,7 +101,11 @@ class CalculdesGeocodesAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Calcul des GEOCODE'
+        return 'Effectuer le calcul des GEOCODE'
+
+    def icon(self):
+
+        return QIcon(os.path.dirname(__file__) + '/image/XY.png')
 
     def displayName(self):
         """

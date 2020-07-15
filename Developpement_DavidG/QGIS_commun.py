@@ -21,6 +21,7 @@ Courriel: david.gauthier@mffp.gouv.qc.ca
 
 from qgis.core import *
 import processing
+from PyQt5.QtCore import QVariant
 from processing.core.Processing import Processing
 from qgis.analysis import QgsNativeAlgorithms
 import datetime
@@ -284,7 +285,7 @@ def calculGeocode(ce, champ, whereclause =''):
         geocode = []
 
         for features in feat:
-            coord = (features.geometry().pointOnSurface())
+            coord = (features.geometry().pointOnSurface()) # point on surafce permet des faire le point  a linterieur du polygone
             geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
     else:
 
@@ -576,6 +577,32 @@ def separerJeuClasseEntite(ce, reptrav, x, y, ESPG = 32198):
     cmd = r"""ogrinfo {0} -sql "drop table ceCopy""".format(gpkg)
     subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
 
+def calculerSuperficie(ce):
+
+    # faire un layer avec ce
+    if isinstance(ce, str):
+        layer = QgsVectorLayer(ce, 'lyr', 'ogr')
+    else:
+        layer = ce
+
+    # ajouter un champ SUP
+    champ = QgsField('SUP', QVariant.Double )
+    layer.dataProvider().addAttributes([champ])
+    layer.updateFields()
+
+    feat = layer.getFeatures()
+    layer_provider = layer.dataProvider()
+
+    # caluler la superficie en m carrée
+    for features in feat:
+        id = features.id()
+        # trouver l'index du champ
+        fields = layer.fields()
+        indexChamp = fields.indexFromName('SUP')  # Index du champ
+        attr_value = {indexChamp: features.geometry().area()}  # Nouvelle valeure
+        layer_provider.changeAttributeValues({id: attr_value})
+
+    layer.commitChanges()
 
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
@@ -593,14 +620,14 @@ if __name__ == '__main__':
 
     ce = "C:/MrnMicro/temp/Export_Output.shp"
     # ce ="C:/MrnMicro/temp/EcoForS5_Ori_Prov.gdb|layername=EcoForS5_ORI_PROV"
-    selection = 'GEOCODE'
+    # selection = 'UUID'
     # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
     # whereclause= ' \"OBJECTID\" <= 30'
     # whereclause=' \"VER_PRG\"  = "AIPF2019"'
-    whereclause = ""
-    calculGeocode(ce, selection, whereclause)
+    # whereclause = ""
+    # calculGeocode(ce, selection, whereclause)
 
-
+    calculerSuperficie(ce)
 
     # ce = r"C:\MrnMicro\temp\Appendice2020\sub.shp"
     # nomJeuClasseEntite = "TOPO"
