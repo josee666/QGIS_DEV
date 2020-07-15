@@ -296,7 +296,7 @@ def calculGeocode(ce, champ, whereclause =''):
             coord = (features.geometry().pointOnSurface())
             geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
 
-    # Mettre la valeur de Geocode dans la champ en remplacant les . par des virgules
+    # remplacer les . par des virgules
     for i in range(len(geocode)):
         row2 = geocode[i].replace(".", ",")
         geocode[i] = row2

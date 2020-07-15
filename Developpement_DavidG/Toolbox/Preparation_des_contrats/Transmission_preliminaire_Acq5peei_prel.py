@@ -37,6 +37,7 @@ import os
 from shutil import ignore_patterns
 from ClassSecurite import Securite_pde
 from PyQt5.QtCore import QVariant
+from qgis.PyQt.QtGui import QIcon
 
 
 from PyQt5.QtCore import QFile, QFileInfo
@@ -310,6 +311,10 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
         formatting characters.
         """
         return '1 - Transmission préliminaire (Acq5peei_prel)'
+
+    def icon(self):
+
+        return QIcon(os.path.dirname(__file__) + '/image/1.png')
 
     def displayName(self):
         """

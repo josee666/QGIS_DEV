@@ -34,6 +34,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
 import shutil
 import os
+from qgis.PyQt.QtGui import QIcon
 
 import processing
 from processing.core.Processing import Processing
@@ -88,6 +89,10 @@ class TransmissionPourAppelOffre(QgsProcessingAlgorithm):
         formatting characters.
         """
         return '3 - Transmission pour appel offres'
+
+    def icon(self):
+
+        return QIcon(os.path.dirname(__file__) + '/image/Offre.png')
 
     def displayName(self):
         """

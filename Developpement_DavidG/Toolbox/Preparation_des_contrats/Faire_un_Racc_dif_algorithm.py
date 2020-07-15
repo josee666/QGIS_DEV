@@ -32,6 +32,7 @@ __revision__ = '$Format:%H$'
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import *
+from qgis.PyQt.QtGui import QIcon
 
 
 import shutil
@@ -215,9 +216,6 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
                                                  'TARGET_CRS':QgsCoordinateReferenceSystem(crs),
                                                  'OUTPUT':Racc_dif},feedback=feedback)
 
-
-
-
         return {self.RAC_DIF: Racc_dif}
 
     def name(self):
@@ -229,6 +227,10 @@ class FaireRaccDifAlgorithm(QgsProcessingAlgorithm):
         formatting characters.
         """
         return '5 - Faire un Racc dif (optionnel)'
+
+    def icon(self):
+
+        return QIcon(os.path.dirname(__file__) + '/image/Rac.png')
 
     def displayName(self):
         """

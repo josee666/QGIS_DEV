@@ -35,6 +35,7 @@ from qgis.core import *
 import shutil
 import os
 from ClassSecurite import Securite_pde
+from qgis.PyQt.QtGui import QIcon
 
 import processing
 from processing.core.Processing import Processing
@@ -676,6 +677,10 @@ class TransmissionpreliminaireAcq5peeiprel2(QgsProcessingAlgorithm):
         formatting characters.
         """
         return '2 - Transmission préliminaire (Acq5peei_prel2)'
+
+    def icon(self):
+
+        return QIcon(os.path.dirname(__file__) + '/image/2.png')
 
     def displayName(self):
         """

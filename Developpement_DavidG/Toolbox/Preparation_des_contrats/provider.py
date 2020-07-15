@@ -36,6 +36,8 @@ from .Transmission_preliminaire_Acq5peei_prel import TransmissionpreliminaireAcq
 from .Transmission_preliminaire_Acq5peei_prel_2 import TransmissionpreliminaireAcq5peeiprel2
 from .TransmissionPourAppelOffre import TransmissionPourAppelOffre
 from .TransmissionFinale import TransmissionFinale
+from qgis.PyQt.QtGui import QIcon
+import os
 
 class Provider(QgsProcessingProvider):
 
@@ -82,11 +84,15 @@ class Provider(QgsProcessingProvider):
         return self.tr('Préparation des contrats')
 
     def icon(self):
-        """
-        Should return a QIcon which is used for your provider inside
-        the Processing toolbox.
-        """
-        return QgsProcessingProvider.icon(self)
+
+        return QIcon(os.path.dirname(__file__) + '/image/Contrat.png')
+
+    # def icon(self):
+    #     """
+    #     Should return a QIcon which is used for your provider inside
+    #     the Processing toolbox.
+    #     """
+    #     return QgsProcessingProvider.icon(self)
 
     def longName(self):
         """
