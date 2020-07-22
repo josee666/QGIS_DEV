@@ -1,0 +1,72 @@
+[general]
+name=Lat Lon Tools
+qgisMinimumVersion=3.4
+description=Tools to capture and zoom to coordinates using decimal, DMS, WKT, GeoJSON, MGRS, UTM, Geohash, Maidenhead grid, and Plus Codes formats. Provides external map support, point digitizing tools, and coordinate conversion tools.
+version=3.3.20
+author=C Hamilton
+email=adenaculture@gmail.com
+about=
+    Lat Lon Tools makes it easy to capture, zoom to coordinates, and interact with other on-line mapping tools. It adds MGRS, Standard UTM, and Plus Codes support to QGIS. When working with Google Earth, Google Maps or other on-line mapping tools, coordinates are specified in the order of 'Latitude, Longitude'. By default Lat Lon Tools uses the standard Google Map format, but is very flexible and can use virtually any projection and coordinate format for input and output. The plugin has the following tools.
+    1) Capture/Display coordinates to the clipboard (in any projection) when the user clicks on the map. This includes DMS, UTM, Geohash, MGRS, Maidenhead grid, and Plus Codes.
+    2) Capture the bounding box of the canvas.
+    3) Zoom to and highlight a point on the map using coordinates from any projection, including MGRS, UTM, Geohash, Maidenhead grid, and Plus Codes, and can format the coordinates in decimal, DMS, WKT POINT, or GeoJSON notation.
+    4) Digitizing service to add points to a layer. It supports all the "Zoom to" input formats.
+    5) Launch and display an external map based on the coordinate clicked on. Supported maps include Open Street Map, Google, Bing, MapQuest, Mapillary, and Google Earth.
+    6) Use a list of points for rapid zooming created from a file, direct input, or captured from the map. Create a point layer from these locations.
+    7) MGRS conversion routines that converts a layer with an MGRS field into a point layer, and creates an MGRS field from the point layer.
+    8) Plus Code conversion routines that converts a layer with a Plus Code field into a point layer, and creates an Plus Code field from the point layer.
+    9) Convert a point layer geometry into a textual representation of that geometry within a field.
+    10) Convert a layer containing a coordinate field or fields into a point layer.
+    11) Coordinate conversion dialog.
+tracker=https://github.com/NationalSecurityAgency/qgis-latlontools-plugin/issues
+repository=https://github.com/NationalSecurityAgency/qgis-latlontools-plugin
+homepage=https://github.com/NationalSecurityAgency/qgis-latlontools-plugin/#readme
+tags=coordinate,capture,latitude,longitude,epsg:4326,4326,wgs84,utm,dms,zoom,move to,crs,wkt,point,mgrs,osm,google,bing,mapillary,openstreetmap,digitizing,digitize,geojson,processing,conversion,plus codes,canvas,bounding box,google earth,geohash,maidenhead grid,amateur radio grid
+category=Plugins
+icon=images/copyicon.png
+hasProcessingProvider=yes
+experimental=False
+deprecated=False
+changelog=
+    3.3.20 - Fix bug #46
+    3.3.19 - Allow users to input their own URLs for external maps.
+    3.3.18 - Updated external map URL parameters for MapQuest and Mapillary
+    3.3.17 - Fixed bug in coordinate coversion panel
+    3.3.16 - Added Maidenhead grid locator format and bug fixes for DMS coordinates
+    3.3.15 - Added zero padding option for DMS coordinates
+    3.3.14 - Updated mgrs.py to the latest version to fix QGIS 10 issues
+    3.3.13 - Fixed tool interactions
+    3.3.12 - Made coordinate conversion dialog box dockable & added zoom to button.
+    3.3.11 - Fix bug
+    3.3.10 - Added 'degree minute' capture and to coordinate conversion dialog box.
+    3.3.9 - Added geohash support
+    3.3.8 - Updated mgrs.py library.
+    3.3.7 - Enhanced Show in External Map capabilities
+    3.3.6 - Rename some of the tools for clarity.
+    3.3.5 - Enabled snapping with the Show in External Map tool.
+    3.3.4 - Bug fix
+    3.3.3 - When snapping is enabled, Copy Latitude, Longitude will snap to and copy the associated vertex
+    3.3.2 - Made the zoom-to and multi-zoom-to tools more flexible.
+    3.3.1 - Added separate DDMMSS delimiter for coordinate converter
+    3.3.0 - Added coordinate converter. Fixed #32
+    3.2.2 - Changed Python 3.6 syntax to work with older versions of QGIS
+    3.2.1 - Added zoom to standard UTM support - refactored DMS code
+    3.2.0 - Added Standard WGS84 UTM Support
+    3.1.18 - Fixed MGRS bug
+    3.1.17 - Added MGRS & Plus Code coordinate input to multi-location zoom
+    3.1.16 - Added show marker setting for coordinate capture and external map
+    3.1.15 - Added Google Earth to external map support.
+    3.1.14 - Added field to point layer conversion.
+    3.1.13 - Fix Zoom To persistent bug
+    3.1.12 - Made Zoom To custom CRS persistent
+    3.1.11 - Bug fix
+    3.1.10 - Added comma without a space as a default to the copy coordinate function
+    3.1.9 - Added a prefix and suffix setting for point capture
+    3.1.8 - Added more flexibility to the bounding box format
+    3.1.7 - Capture the bounding box of the canvas
+    3.1.6 - Bug fix
+    3.1.5 - Enhancement to DDMMSS parsing
+    3.1.4 - Multizoom bug fix
+    3.1.3 - Moved Geometry 2 field to processing & added decimal settings precision
+    3.1.2 - Added multipoint fix for digitizer
+    3.1.1 - Additional Plus Code support and moved toolbar icons to its own toolbar

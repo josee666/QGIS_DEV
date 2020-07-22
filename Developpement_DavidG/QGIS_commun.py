@@ -141,7 +141,7 @@ def updateCursor(ce, champ, valeur, nouvelleValeur):
             indexChamp = fields.indexFromName(champ) # Index du champ
             attr_value = {indexChamp: nouvelleValeur} # Nouvelle valeure
             layer_provider.changeAttributeValues({id: attr_value})
-        layer.commitChanges()
+    layer.commitChanges()
 
 def calculGeocodeOLD(ce, champ, whereclause =''):
     """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
@@ -606,19 +606,36 @@ def calculerSuperficie(ce):
 
 if __name__ == '__main__':
     # ce = 'ForS5_fus'
-    # gdb = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
-    # gpkg = r"E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gpkg"
+
+    from datetime import datetime
+    start=datetime.now()
+
+
+    gdb = r"C:\MrnMicro\temp\ForOri07.gdb"
+    gpkg = r"C:\MrnMicro\temp\ForOri07.gpkg"
 
     # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
 
-    # ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
-    # champ = 'CDE_CO'
-    # ancienneValeure = 'A'
-    # nouvelleValeure = 'Z'
 
-    # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
+    ce = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
+    champ = 'ORIGINE'
+    ancienneValeure = 'CPR'
+    nouvelleValeure = 'ttt'
 
-    ce = "C:/MrnMicro/temp/Export_Output.shp"
+    transfererCeGdbToGeoPackage(ce, gdb, gpkg)
+
+    updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
+
+    cegpkg = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
+    nomJeuClasseEntite = "TOPO"
+    nomClasseEntite = "ForS5_fus"
+    outGDB = r"C:\MrnMicro\temp\ForOritest.gdb"
+
+    conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+
+    print(datetime.now()-start)
+
+    # ce = "C:/MrnMicro/temp/Export_Output.shp"
     # ce ="C:/MrnMicro/temp/EcoForS5_Ori_Prov.gdb|layername=EcoForS5_ORI_PROV"
     # selection = 'UUID'
     # # whereclause = " \"GES_CO\" = '{}' ".format("ENEN")
@@ -627,7 +644,7 @@ if __name__ == '__main__':
     # whereclause = ""
     # calculGeocode(ce, selection, whereclause)
 
-    calculerSuperficie(ce)
+    # calculerSuperficie(ce)
 
     # ce = r"C:\MrnMicro\temp\Appendice2020\sub.shp"
     # nomJeuClasseEntite = "TOPO"
