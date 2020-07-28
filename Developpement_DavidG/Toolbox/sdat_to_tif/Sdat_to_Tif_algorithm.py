@@ -82,13 +82,12 @@ class SdatToTifAlgorithm(QgsProcessingAlgorithm):
         for li in list:
             if (li.startswith("UD_")):
 
-                i = list.index(li)
-                i+=1
+                li = li[3:]
 
-                sdat = os.path.join(Folder,"UD_{}".format(i),"STWI", "TWI_SAGA.sdat")
-                outputTif = os.path.join(Folder,"UD_{}".format(i),"STWI_UD_{}.tif".format(i))
+                sdat = os.path.join(Folder,"UD_{}".format(li),"STWI", "TWI_SAGA.sdat")
+                outputTif = os.path.join(Folder,"UD_{}".format(li),"STWI_UD_{}.tif".format(li))
 
-                feedback.pushInfo("\nConversion du tif # {}\n".format(i))
+                feedback.pushInfo("\nConversion du STWI_UD_{}.tif \n".format(li))
 
 
                 processing.run("gdal:translate", {'INPUT':sdat,'TARGET_CRS':None,

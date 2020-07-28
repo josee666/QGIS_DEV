@@ -119,8 +119,6 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
         else:
             pass
 
-        # try:
-
         # connection au serveur ulysse1
         obj_connec_doff = Securite_pde(environnement_acceptation, genUsername, genPassword, temps_attente=2,host=host)
         obj_connec_doff.connect_serveur()
@@ -156,8 +154,7 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
 
             # Copie de la carte ecoforestiere et struture vide
             if os.path.exists(os.path.join(retrav, "EcoFor_Ori_Prov.gdb")):
-
-                os.remove(os.path.join(retrav, "EcoFor_Ori_Prov.gdb"))
+                shutil.rmtree(os.path.join(retrav, "EcoFor_Ori_Prov.gdb"))
 
 
             shutil.copytree(GDB_EcoForOri, os.path.join(retrav, "EcoFor_Ori_Prov.gdb"),
@@ -221,11 +218,19 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
             ce_ecofor_select = processing.run("native:saveselectedfeatures", {'INPUT': ceCarteEcofor, 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
                                    feedback=feedback)["OUTPUT"]
 
-            msg = u"\n2.2 Dissolve de la selection"
+
+            msg = u"\n2.2 Réparer les géométries"
+            feedback.pushInfo(msg)
+
+            repair = processing.run("native:fixgeometries", {'INPUT':ce_ecofor_select,'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                                    feedback=feedback)["OUTPUT"]
+
+
+            msg = u"\n2.3 Dissolve de la selection"
             feedback.pushInfo(msg)
 
             # Un dissolve de ma selection et apres je vais suppirmer les trous a l'interieur du dissolve.
-            dissolve = processing.run("native:dissolve", {'INPUT': ce_ecofor_select, 'FIELD': [], 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+            dissolve = processing.run("native:dissolve", {'INPUT': repair, 'FIELD': [], 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
                               feedback=feedback)["OUTPUT"]
 
             # suppirmer les trous a l'interieur du dissolve
@@ -287,17 +292,8 @@ class TransmissionpreliminaireAcq5peeiprel(QgsProcessingAlgorithm):
             for file in os.listdir(out):
                 shutil.copy(os.path.join(out, file), trm_pre)
 
-
-            # TODO marche pas....il me dit acces refusé
-            os.remove(os.path.join(retrav, "EcoFor_Ori_Prov.gdb"))
-            os.rmdir(trm_pre_tansfert)
-
             msg = u"\n5. Fin du programme"
             feedback.pushInfo(msg)
-
-
-        # except Exception as e:
-        #     raise QgsProcessingException(e)
 
 
         return {self.INPUT_perm5pre: 'INPUT_perm5pre'}

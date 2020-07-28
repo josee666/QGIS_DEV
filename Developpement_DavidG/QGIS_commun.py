@@ -605,35 +605,41 @@ def calculerSuperficie(ce):
     layer.commitChanges()
 
 if __name__ == '__main__':
+
+    cmd = r"""ogr2ogr -append -F SQLITE C:\MrnMicro\temp\CLASSI_ECO_IEQM.sqlite C:\MrnMicro\temp\CLASSI_ECO_IEQM.gdb -dsco spatialite=yes -preserve_fid"""
+    subprocess.call(cmd)
+
+
+
     # ce = 'ForS5_fus'
 
-    from datetime import datetime
-    start=datetime.now()
-
-
-    gdb = r"C:\MrnMicro\temp\ForOri07.gdb"
-    gpkg = r"C:\MrnMicro\temp\ForOri07.gpkg"
-
+    # from datetime import datetime
+    # start=datetime.now()
+    #
+    #
+    # gdb = r"C:\MrnMicro\temp\ForOri07.gdb"
+    # gpkg = r"C:\MrnMicro\temp\ForOri07.gpkg"
+    #
+    # # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
+    #
+    #
+    # ce = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
+    # champ = 'ORIGINE'
+    # ancienneValeure = 'CPR'
+    # nouvelleValeure = 'ttt'
+    #
     # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
-
-
-    ce = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
-    champ = 'ORIGINE'
-    ancienneValeure = 'CPR'
-    nouvelleValeure = 'ttt'
-
-    transfererCeGdbToGeoPackage(ce, gdb, gpkg)
-
-    updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
-
-    cegpkg = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
-    nomJeuClasseEntite = "TOPO"
-    nomClasseEntite = "ForS5_fus"
-    outGDB = r"C:\MrnMicro\temp\ForOritest.gdb"
-
-    conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
-
-    print(datetime.now()-start)
+    #
+    # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
+    #
+    # cegpkg = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
+    # nomJeuClasseEntite = "TOPO"
+    # nomClasseEntite = "ForS5_fus"
+    # outGDB = r"C:\MrnMicro\temp\ForOritest.gdb"
+    #
+    # conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+    #
+    # print(datetime.now()-start)
 
     # ce = "C:/MrnMicro/temp/Export_Output.shp"
     # ce ="C:/MrnMicro/temp/EcoForS5_Ori_Prov.gdb|layername=EcoForS5_ORI_PROV"

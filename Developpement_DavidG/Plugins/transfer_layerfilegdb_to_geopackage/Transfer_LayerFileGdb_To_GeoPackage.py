@@ -214,14 +214,12 @@ class TransferLayerFileGdbToGeoPackage:
         # See if OK was pressed
 
         if result:
-            # Faire une lsite de ce que contient la geobase
+            # Faire une liste de ce que contient la geobase
             list = fiona.listlayers(self.dlg.lineEdit.text())
             tmp = self.dlg.lineEdit.text()
             filename = tmp.replace(".gdb","")
             gdb = filename + '.gdb'
 
-            # progressMessageBar = self.iface.messageBar().createMessage("Doing something boring...")
-            # progress = self.QProgressBar()
 
             for name in list:
 
