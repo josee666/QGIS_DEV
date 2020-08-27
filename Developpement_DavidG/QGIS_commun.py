@@ -21,15 +21,22 @@ Courriel: david.gauthier@mffp.gouv.qc.ca
 
 from qgis.core import *
 import processing
-from PyQt5.QtCore import QVariant
 from processing.core.Processing import Processing
 from qgis.analysis import QgsNativeAlgorithms
-import datetime
 import sys
-
 import os
-from os import path
 import subprocess
+import time
+import shutil
+import os.path
+from os import path
+import glob
+import pandas as pd
+import pandas
+import csv
+from processing.tools import dataobjects
+from PyQt5.QtCore import QVariant
+
 
 
 # # Pour faire marcher GRASS en StandAlone script
@@ -50,9 +57,48 @@ import subprocess
 # # Initialiser les outils qgis
 # Processing.initialize()
 #
+# # sys.path.append(r'C:\MrnMicro\Applic\OSGeo4W64\apps\qgis-ltr\python\plugins\processing\algs\gdal')
+#
 # # Permet d'utiliser les algorithmes "natif" ecrit en c++
 # # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
 # QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+
+
+
+
+def connec_sqlite(nombd):
+
+    """ Fonction qui creer une connexion sur une BD SQLITE ou GEOPACKAGE et creer un curseur
+    ARG: nombd(str): le nom de la bd avec chemin d'acces
+
+    RETURN: nomconnection, nomcursor
+    exemple d'appel: con, cur = connec_sqlite('E:/Python/projet/valid_acq/data/acq.sqlite')
+    """
+    import sqlite3
+    nomconnection = None
+    nomconnection = sqlite3.connect(nombd)
+    nomcursor = nomconnection.cursor()
+    return nomconnection, nomcursor
+
+def executeSQL(cursor, req, retour_cursor=True):
+
+    """ JM 2016-03-10
+    Fonction qui execute un SQL sur une BD
+    ARGS:
+        cursor(str) : Le curseur définie
+        req(str) : Requete SQL a lancer
+    Return: True/ si execution réussi, objet erreur si non réussi
+    """
+    import sqlite3
+    try:
+        cursor.execute(req)
+        if retour_cursor:
+            return cursor  #, True
+
+    except sqlite3.Error as eSqlite:
+        print(eSqlite.message)
+
+        raise
 
 
 def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
@@ -402,9 +448,9 @@ def conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB):
                conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
         """
 
-    CREATE_NO_WINDOW = 0x08000000
+    # CREATE_NO_WINDOW = 0x08000000
     cmd = r"""ogr2ogr -f "FileGDB" {3} {0} -t_srs EPSG:32198 -lco FEATURE_DATASET={1} -lco XYTOLERANCE=0.02 -nln {2}""".format(ce,nomJeuClasseEntite,nomClasseEntite,outGDB)
-    subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
+    subprocess.call(cmd)
 
 def identifyNarrowPolygon(ce, ceNarrow):
 
@@ -547,7 +593,7 @@ def separerJeuClasseEntite(ce, reptrav, x, y, ESPG = 32198):
         processing.run("qgis:selectbyexpression", {'INPUT':grille,'EXPRESSION':whereclause,'METHOD':0})
 
         # copier la selection en memoire
-        select = processing.run("native:saveselectedfeatures", {'INPUT': grille, 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
+        select = processing.run("native:saveselectedfeatures", {'INPUT': grille, 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT}),["OUTPUT"]
 
         # faire une selection location intersect avec la grille sur la ce
         processing.run("native:selectbylocation", {'INPUT':ceCopy,
@@ -570,14 +616,13 @@ def separerJeuClasseEntite(ce, reptrav, x, y, ESPG = 32198):
     sys.path.append(r"\\Sef1271a\F1271g\OutilsProdDIF\modules_communs\gdal\gdal2.3.2")
 
     CREATE_NO_WINDOW = 0x08000000
-
     cmd = r"""ogrinfo {0} -sql "drop table grille""".format(gpkg)
     subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
 
     cmd = r"""ogrinfo {0} -sql "drop table ceCopy""".format(gpkg)
     subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
 
-def calculerSuperficie(ce):
+def calculerSuperficieAlbers(ce):
 
     # faire un layer avec ce
     if isinstance(ce, str):
@@ -585,60 +630,463 @@ def calculerSuperficie(ce):
     else:
         layer = ce
 
-    # ajouter un champ SUP
-    champ = QgsField('SUP', QVariant.Double )
-    layer.dataProvider().addAttributes([champ])
-    layer.updateFields()
+    layerReproject = processing.run("native:reprojectlayer", {'INPUT':layer,'TARGET_CRS':QgsCoordinateReferenceSystem('ESRI:102001'),'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT},
+                             )["OUTPUT"]
 
+    # ajouter un champ SUPERFICIE
+    # # https://qgis.org/pyqgis/3.2/core/Field/QgsField.html
+    # # https://gis.stackexchange.com/questions/174971/how-to-define-the-number-of-decimals-when-adding-a-new-field-as-double-to-an-att
+    #
+    # champ = QgsField('SUPERFICIE', QVariant.Double,'double',30, 1 )
+    # layer.dataProvider().addAttributes([champ])
+    # layer.updateFields()
+
+    # calculer la superficie de la couche reprojeté en Albers et mettre le tout dans une liste
+    feat = layerReproject.getFeatures()
+    superficie = []
+
+    for features in feat:
+        sup =round((features.geometry().area())/ 10000,1)
+        superficie.append(sup)
+
+    # mettre a jour la superficie de la couche original avec la liste des superficies de la couche reprojetée
     feat = layer.getFeatures()
     layer_provider = layer.dataProvider()
+
+    i=0
+    for features in feat:
+        id = features.id()
+        # trouver l'index du champ
+        fields = layer.fields()
+        indexChamp = fields.indexFromName('SUPERFICIE')
+        attr_value = {indexChamp: superficie[i]}
+        layer_provider.changeAttributeValues({id: attr_value})
+        i+=1
+
+    layer.commitChanges()
+def selectByExpression(layer, expression, method=0):
+
+    """Permet de sélectionner une couche par expression (selon les attributs).
+            Args:
+                layer : classe d'entité que l'on veut sélectionner
+                expression : expression sql de la sélection
+                method : méthode de sélection. La valeur par défaut est 0 (0=Créer une nouvelle sélection, 1=Ajouter a la sélection courante, 2=Enlever de la sélection actuelle, 3=Sélection au sein de la sélection courante)
+
+
+            Exemples d'appel de la fonction:
+
+            table = r"C:\MrnMicro\temp\Couche_annuelle\TableCodesVP.gdb|layername=DDE_PRO_SOU_VP_VUE"
+            layer = QgsVectorLayer(table, 'lyr', 'ogr')
+            expression = '\"PRS_IN_MJF\" = "O"'
+            method = 3
+            selectByExpression(layer, expression, method)
+    """
+
+    if method == 0:
+        behavior = QgsVectorLayer.SetSelection
+    elif method == 1:
+        behavior = QgsVectorLayer.AddToSelection
+    elif method == 2:
+        behavior = QgsVectorLayer.RemoveFromSelection
+    elif method == 3:
+        behavior = QgsVectorLayer.IntersectSelection
+
+    layer.selectByExpression(expression, behavior)
+    return layer.selectedFeatures()
+
+
+def calculateAttributes(layer, field, expression, selection=False):
+
+    """Permet de calculer un champ.
+            Args:
+                layer : classe d'entité que l'on veut calculer
+                field : champ que l'on veut calculer
+                expression : expression qui permet de déterminer la valeur calculée (Si on veut copier la valeur d'un autre champ, il faut inscrire : feature['FIELD'].
+                selection : Si la valuer est True, le calcul est fait sur les entités selectionnées . La valeur par defaut est False.
+
+
+            Exemples d'appel de la fonction:
+
+            gpkg_path = f"C:/MrnMicro/temp/Couche_annuelle/geotraitement/foret.gpkg|layername=territoire"
+            layer = QgsVectorLayer(gpkg_path, 'lyr', 'ogr')
+            field = "NOMAJ_PEE"
+            expression = "feature['OBJECTID'] + 1"
+            calculateAttributes(layer, field, expression)
+    """
+
+    if not selection:
+        with edit(layer):
+            for feature in layer.getFeatures():
+                feature.setAttribute(feature.fieldNameIndex(field), eval(expression))
+                layer.updateFeature(feature)
+    elif selection:
+        with edit(layer):
+            for feature in layer.getSelectedFeatures():
+                feature.setAttribute(feature.fieldNameIndex(field), eval(expression))
+                layer.updateFeature(feature)
+
+
+def convertListForSqlQuery(list):
+
+    """Permet de convertir une liste python pour être inclus dans une requête SQL. Les crochets deviennent des parenthèses.
+            Args:
+                list : liste python
+
+            Exemples d'appel de la fonction:
+
+            list_error = ['RADIOO', 'LOS', 'RTG']
+            selectByExpression(layer, f"NOMAJ_PEE" IN {convertListForSqlQuery(list_error)}"
+    """
+    elements = (', '.join("'{0}'".format(x) for x in list))
+    sql_list = f"({elements})"
+    return sql_list
+
+
+def supprimerUnChamp(fc, champ):
+
+    layer_fc = QgsVectorLayer(fc, 'lyr', 'ogr')
+    layer_provider = layer_fc.dataProvider()
+    fields = layer_fc.fields()
+
+    indexChamp = fields.indexFromName(champ)  # Index du champ
+    layer_provider.deleteAttributes([indexChamp])
+    layer_fc.updateFields()
+
+
+def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = False):
+    
+    # Geopackage temporaire
+    gpkg = os.path.join(r"C:\MrnMicro\temp","temp.gpkg")
+
+    if os.path.exists(gpkg):
+        os.remove(gpkg)
+    else:
+        pass
+
+    # il faut toujours travailler dans un GEOPACKAGE, car si je prends un shape et un layer dans un GEOPACKAGE,
+    #  les outils comme intersect ne fonctionne pas bien
+
+    # Je copie les 2 intrants (target_features et join_features) dans le GEOPACKAGE temporaire
+    # J'enleve l'extension car il est créé plus bas
+    gpkg = gpkg.replace(".gpkg", "")
+
+
+    options_GPKG = QgsVectorFileWriter.SaveVectorOptions()
+    options_GPKG.driverName = "GPKG"
+    options_GPKG.layerName ="target_features"
+
+    # faire un layer si c un string
+    if isinstance(target_features, str):
+        target_features = QgsVectorLayer(target_features, 'target_layer', 'ogr')
+    else:
+        pass
+
+    # Ecrire le fichier dans le gpkg
+    QgsVectorFileWriter.writeAsVectorFormatV2(target_features, gpkg, QgsCoordinateTransformContext(), options_GPKG)
+
+    target_features_gpkg = "{0}|layername=target_features".format(gpkg+".gpkg")
+    target_features = target_features_gpkg
+
+
+    # permet de copier dans un GPKG existant
+    options_GPKG.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+    options_GPKG.layerName ="join_features"
+
+    # faire un layer si c un string
+    # faire un layer
+    if isinstance(join_features, str):
+        join_features = QgsVectorLayer(join_features, 'lyr', 'ogr')
+    else:
+        pass
+
+
+    # Ecrire le fichier dans le gpkg
+    QgsVectorFileWriter.writeAsVectorFormatV2(join_features, gpkg , QgsCoordinateTransformContext(), options_GPKG)
+
+    join_features_gpkg = "{0}|layername=join_features".format(gpkg+".gpkg")
+    join_features = join_features_gpkg
+
+
+    gpkg = os.path.join(r"C:\MrnMicro\temp","temp.gpkg")
+
+    # faire des layer
+    if isinstance(target_features, str):
+        target_layer = QgsVectorLayer(target_features, 'target_layer', 'ogr')
+    else:
+        target_layer = target_features
+
+
+    # ajouter un champ SUP1 au target et caluler la superficie
+    champ = QgsField('SUP1', QVariant.Double,'double',100,2 )
+    target_layer.dataProvider().addAttributes([champ])
+    target_layer.updateFields()
+
+    feat = target_layer.getFeatures()
+    layer_provider = target_layer.dataProvider()
 
     # caluler la superficie en m carrée
     for features in feat:
         id = features.id()
         # trouver l'index du champ
-        fields = layer.fields()
-        indexChamp = fields.indexFromName('SUP')  # Index du champ
-        attr_value = {indexChamp: features.geometry().area()}  # Nouvelle valeure
+        fields = target_layer.fields()
+        indexChamp = fields.indexFromName('SUP1')  # Index du champ
+
+        sup =str(round(features.geometry().area(),2))
+        attr_value = {indexChamp: sup}  # calculer area
         layer_provider.changeAttributeValues({id: attr_value})
 
-    layer.commitChanges()
+    target_layer.commitChanges()
+
+    # creer un champ unique qui servira pour le join final
+    layer_provider=target_layer.dataProvider()
+    layer_provider.addAttributes([QgsField("UNIQ",QVariant.String)])
+    target_layer.updateFields()
+
+
+    # Calculer la valeur unique avec la fonction pour calculer les geocodes
+    calculGeocode(target_layer, "UNIQ", whereclause ='')
+
+    if isinstance(join_features, str):
+        join_layer = QgsVectorLayer(join_features, 'join_layer', 'ogr')
+    else:
+        join_layer = join_features
+
+
+    # permet d'ignorer les geometries non valide
+    context = dataobjects.createContext()
+    context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+
+
+    # faire un intersect
+    # intersect = processing.run("native:intersection", {'INPUT':target_layer,'OVERLAY':join_layer,'INPUT_FIELDS':[],
+    #                                                    'OVERLAY_FIELDS':[],'OVERLAY_FIELDS_PREFIX':'','OUTPUT': QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
+
+
+
+
+    processing.run("native:intersection", {'INPUT':target_layer,'OVERLAY':join_layer,
+                                           'INPUT_FIELDS':['fid', 'UNIQ','SUP1'],'OVERLAY_FIELDS':[],'OVERLAY_FIELDS_PREFIX':'',
+                                           'OUTPUT':'ogr:dbname=\'{0}\' table=\"intersect\" (geom) sql='.format(gpkg)})
+
+
+    intersect = "C:/MrnMicro/temp/temp.gpkg|layername=intersect"
+    intersect = QgsVectorLayer(intersect, 'lyr', 'ogr')
+
+    # # calculer la nouvelle superficie des polygones
+    # sup2 = processing.run("qgis:fieldcalculator", {'INPUT':intersect,'FIELD_NAME':'SUP2','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':2,
+    #                                                'NEW_FIELD':True,'FORMULA':'round($area,2)','OUTPUT': QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
+
+    processing.run("qgis:fieldcalculator", {'INPUT':intersect,'FIELD_NAME':'SUP2','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':2,
+                                                   'NEW_FIELD':True,'FORMULA':'round($area,2)',
+                                            'OUTPUT':'ogr:dbname=\'{0}\' table=\"sup2\" (geom) sql='.format(gpkg)})
+
+    sup2 = "C:/MrnMicro/temp/temp.gpkg|layername=sup2"
+    sup2 = QgsVectorLayer(sup2, 'lyr', 'ogr')
+
+
+
+    # calculer la proportion de la superficie SUP2 et SUP1
+    processing.run("qgis:fieldcalculator", {'INPUT':sup2,'FIELD_NAME':'prop','FIELD_TYPE':0,'FIELD_LENGTH':100,
+                                            'FIELD_PRECISION':2,'NEW_FIELD':False,'FORMULA':'( \"SUP2\"  /  \"SUP1\" ) * 100',
+                                            'OUTPUT':'ogr:dbname=\'{0}\' table=\"prop\" (geom) sql='.format(gpkg)})
+
+    # classe d'entité contenant les proportion de l'intersect
+    prop = "{0}|layername=prop".format(gpkg)
+    prop = QgsVectorLayer(prop, 'lyr', 'ogr')
+
+
+    if Pente is False:
+
+        # faire un csv avec prop
+        csvProp = r'C:\MrnMicro\temp\prop.csv'
+        options_CSV = QgsVectorFileWriter.SaveVectorOptions()
+        options_CSV.driverName = "CSV"
+
+        # Ecrire le CSV
+        QgsVectorFileWriter.writeAsVectorFormatV2(prop, csvProp , QgsCoordinateTransformContext(), options_CSV)
+
+    else:
+
+        # creer un champ unique qui sera utilisé pour les pentes
+        proptemp = processing.run("qgis:fieldcalculator", {'INPUT':prop,
+                                                           'FIELD_NAME':'New_Id','FIELD_TYPE':2,'FIELD_LENGTH':35,
+                                                           'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' concat(  \"UNIQ\" , \"CL_PENT\" )',
+                                                           'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
+
+        # faire un csv avec proptemp
+        csvProp = r'C:\MrnMicro\temp\prop.csv'
+        options_CSV = QgsVectorFileWriter.SaveVectorOptions()
+        options_CSV.driverName = "CSV"
+
+        # Ecrire le CSV
+        QgsVectorFileWriter.writeAsVectorFormatV2(proptemp, csvProp , QgsCoordinateTransformContext(), options_CSV)
+
+
+    input_files = r"C:\MrnMicro\temp\prop.csv"
+
+    # faire la connection avec la bd
+    nomconnection, nomcursor = connec_sqlite(gpkg)
+
+    # copier avec panda le csv dans la bd
+    df = pandas.read_csv(input_files)
+    df.to_sql("Proportion", nomconnection, if_exists='append', index=False)
+
+    if Pente is False:
+
+        # requete SQL qui permet de grouper les UNIQ avec la plus grande proportion de superposition. cette valeur est dans le champ prop
+        req = "create table resultFinal as select * from Proportion GROUP BY UNIQ having prop = max(prop)"
+
+        # excecuter la requete
+        executeSQL(nomcursor, req, retour_cursor=True)
+
+    else:
+
+        # faire une requete pour les pentes
+        # permet de faire une somme des proportion par classes de pente par UNIQ
+        req = "create table SelectionPente as select *, SUM(prop) TotalProp from Proportion GROUP BY New_id"
+
+        # excecuter la requete
+        executeSQL(nomcursor, req, retour_cursor=True)
+
+        # permet de prendre le maximum des proportion par UNIQ afin d'avoir la pente le plus représentée
+        req = "create table resultFinal as select * from SelectionPente GROUP BY UNIQ having TotalProp = max(TotalProp)"
+
+        # excecuter la requete
+        executeSQL(nomcursor, req, retour_cursor=True)
+
+
+    resultaFinalGpkg = "C:/MrnMicro/temp/temp.gpkg|layername=resultFinal"
+
+    # faire un layer avec resultFinal
+    result = QgsVectorLayer(resultaFinalGpkg, 'lyr', 'ogr')
+
+    # faire le join avec la table resultFinal et target_layer
+    processing.run("native:joinattributestable", {'INPUT':target_layer,'FIELD':'UNIQ',
+                                                  'INPUT_2':result,
+                                                  'FIELD_2':'UNIQ','FIELDS_TO_COPY':[],'METHOD':1,
+                                                  'DISCARD_NONMATCHING':False,'PREFIX':'','OUTPUT':outfc})
+
+    # Supprimer les champs inutiles du join
+    supprimerUnChamp(outfc, "UNIQ")
+    supprimerUnChamp(outfc, "UNIQ_2")
+    supprimerUnChamp(outfc, "SUP1_2")
+    supprimerUnChamp(outfc, "SUP1")
+    supprimerUnChamp(outfc, "SUP2")
+
+    if Pente is False:
+         pass
+    else:
+        supprimerUnChamp(outfc, "prop")
+        supprimerUnChamp(outfc, "New_Id")
+
+
+        # jeter le csv prop.csv
+    os.remove(csvProp)
+
 
 if __name__ == '__main__':
 
-    cmd = r"""ogr2ogr -append -F SQLITE C:\MrnMicro\temp\CLASSI_ECO_IEQM.sqlite C:\MrnMicro\temp\CLASSI_ECO_IEQM.gdb -dsco spatialite=yes -preserve_fid"""
-    subprocess.call(cmd)
+    tempsDebut = time.time()
+
+    target_features = r'C:\MrnMicro\temp\For_sub_2.shp'
+    # target_features = 'C:/MrnMicro/temp/ForOri07.gpkg|layername=For_sub_2'
+    # join_features = r'C:\MrnMicro\temp\For_sub_3.shp'
+    # join_features = r'C:\MrnMicro\temp\ecologie_sub.shp'
+    join_features = 'C:/MrnMicro/temp/pente.gpkg|layername=Pente_clip_RepairSP'
+    outfc = r'C:\MrnMicro\temp\join.shp'
 
 
+    # target_features = "C:/MrnMicro/temp/ForOri07.gdb|layername=ForS5_fus"
+    # join_features = "C:/MrnMicro/temp/CARTE_ECOLOGIQUE_5E.gdb|CARTE_ECOLOGIQUE_5E"
+    # #
+    # outfc = "C:/MrnMicro/temp/temp.gpkg|layername=join"
+    # bd = r"C:\MrnMicro\temp\temp.gpkg"
+    #
+    # # faire la connection avec la bd
+    # nomconnection, nomcursor = connec_sqlite(bd)
+    #
+    # # requete SQL qui permet de grouper les objectid avec la plus grande proportion de superposition. cette valeur est dans le champ prop
+    # req = "select * from prop GROUP BY OBJECTID having prop = max(prop)"
+    #
+    # # excecuter la requete
+    # selection = executeSQLite(nomcursor, req, retour_cursor=True)
+
+    Pente = True
+    spatialJoinLargestOverlap(target_features, join_features,outfc, Pente)
+
+
+    # input_files = r"C:\MrnMicro\temp\prop.csv"
+    # bd_sqlite = r"C:\MrnMicro\temp\Proportion.sqlite"
+    # nomconnection, nomcursor = connec_sqlite(bd_sqlite)
+    # # df = pandas.read_csv(input_files)
+    # # df.to_sql("Proportion", nomconnection, if_exists='append', index=False)
+    #
+    # req = "CREATE TABLE test"
+    # selection = executeSQLite(nomcursor, req, retour_cursor=True)
+
+    # req = "INSERT INTO Proportion.TABLE SELECT * FROM resultat.TABLE"
+    # executeSQLite(selection, req, retour_cursor=True)
+
+
+
+
+    # liste = list(selection.fetchall())
+    # print(liste)
+
+
+    # executeSQLite(selection, req, retour_cursor=True)
+
+
+
+
+
+
+
+    # layer = QgsVectorLayer(target_features, 'lyr', 'ogr')
+    # options_CSV = QgsVectorFileWriter.SaveVectorOptions()
+    # options_CSV.driverName = "CSV"
+    #
+    # QgsVectorFileWriter.writeAsVectorFormatV2(layer, r'C:\MrnMicro\temp\xyz.csv', QgsCoordinateTransformContext(), options_CSV)
+
+    timeTot = time.time()
+    temp_tot = round((timeTot - tempsDebut) / 60, 4)
+    print(temp_tot)
+
+    # initialiserQGIS()
+
+    # cmd = r"""ogr2ogr -append -F SQLITE C:\MrnMicro\temp\CLASSI_ECO_IEQM.sqlite C:\MrnMicro\temp\CLASSI_ECO_IEQM.gdb -dsco spatialite=yes -preserve_fid"""
+    # subprocess.call(cmd)
 
     # ce = 'ForS5_fus'
 
     # from datetime import datetime
     # start=datetime.now()
-    #
-    #
+
     # gdb = r"C:\MrnMicro\temp\ForOri07.gdb"
     # gpkg = r"C:\MrnMicro\temp\ForOri07.gpkg"
     #
     # # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
-    #
-    #
+
+
     # ce = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
     # champ = 'ORIGINE'
     # ancienneValeure = 'CPR'
     # nouvelleValeure = 'ttt'
-    #
+
     # transfererCeGdbToGeoPackage(ce, gdb, gpkg)
     #
     # updateCursor(ce, champ, ancienneValeure, nouvelleValeure)
-    #
-    # cegpkg = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
+
+    # ce = r"C:\MrnMicro\temp\ForOri07.gpkg|layername=ForS5_fus"
+    # ce = r"C:\MrnMicro\temp\Racc_dif.shp"
     # nomJeuClasseEntite = "TOPO"
     # nomClasseEntite = "ForS5_fus"
     # outGDB = r"C:\MrnMicro\temp\ForOritest.gdb"
     #
-    # conversionFormatVersGDBCMD(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
-    #
+    # conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
+
+    # calculerSuperficieAlbers(ce)
+
     # print(datetime.now()-start)
 
     # ce = "C:/MrnMicro/temp/Export_Output.shp"
@@ -656,7 +1104,7 @@ if __name__ == '__main__':
     # nomJeuClasseEntite = "TOPO"
     # nomClasseEntite = "CorS5"
     # outGDB = r"C:\MrnMicro\temp\ForOri.gdb"
-    #
+
     # cmd = r"""ogr2ogr -f "FileGDB" C:\MrnMicro\temp\ForOri.gdb C:\MrnMicro\temp\Racc_dif.shp -lco FEATURE_DATASET=TOPO -lco XYTOLERANCE=0.02 -nln CorS5"""
     # subprocess.call(cmd)
     # conversionFormatVersGDB(ce, nomJeuClasseEntite, nomClasseEntite, outGDB)
@@ -667,11 +1115,11 @@ if __name__ == '__main__':
     # # ce = r"C:/MrnMicro/temp/Appendice2020/appendice_qgis.gpkg|layername=territoire_a_traiter"
     # ce = "C:/MrnMicro/temp/Appendice2020/ce_ecofor_territoire_a_taiter_sub1000.shp"
     # ceNarrow =r"C:\MrnMicro\temp\Appendice2020\ce_ecofor_territoire_a_taiterNarrow.shp"
-    #
+
     # print(datetime.datetime.now())
-    #
+
     # identifyNarrowPolygon(ce, ceNarrow)
-    #
+
     # tempsTot = datetime.datetime.now() - debut
     # print("temps pour la durée du traitement: {}".format(tempsTot))
 

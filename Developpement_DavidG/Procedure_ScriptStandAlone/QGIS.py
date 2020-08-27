@@ -24,6 +24,7 @@ from qgis.core import *
 import processing
 from processing.core.Processing import Processing
 from qgis.analysis import QgsNativeAlgorithms
+from PyQt5.QtCore import QVariant
 import sys
 import os
 import subprocess
@@ -31,7 +32,7 @@ import subprocess
 
 
 # Chemin ou QGIS est installer
-QgsApplication.setPrefixPath(r"C:\MrnMicro\Applic\OSGeo4W64\bin", True)
+QgsApplication.setPrefixPath(r"C:\MrnMicro\OSGeo4W64\bin", True)
 
 # Créer une reference à QgsApplication,
 # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
@@ -51,21 +52,52 @@ QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 # Écrire les algorithmes que l'on veut appeler.
 
-# input = 'C:/MrnMicro/temp/Perm5trm.shp'
+ce = 'C:/MrnMicro/temp/Racc_dif.shp'
 # output = 'C:/MrnMicro/temp/test.shp'
 # param = {'INPUT':input,'ROUND_TO':0,'OUTPUT':output}
-#
-# # permet de sortir l'extent d'une couche
+
+# faire un layer avec ce
+if isinstance(ce, str):
+    layer = QgsVectorLayer(ce, 'lyr', 'ogr')
+else:
+    layer = ce
+
+# ajouter un champ SUP
+# https://qgis.org/pyqgis/3.2/core/Field/QgsField.html
+# https://gis.stackexchange.com/questions/174971/how-to-define-the-number-of-decimals-when-adding-a-new-field-as-double-to-an-att
+
+champ = QgsField('test', QVariant.Double,'double',100,2 )
+layer.dataProvider().addAttributes([champ])
+layer.updateFields()
+
+feat = layer.getFeatures()
+layer_provider = layer.dataProvider()
+
+# caluler la superficie en m carrée
+for features in feat:
+    id = features.id()
+    # trouver l'index du champ
+    fields = layer.fields()
+    indexChamp = fields.indexFromName('test')  # Index du champ
+
+    sup =str(round(features.geometry().area(),2))
+    attr_value = {indexChamp: sup}  # calculer area
+    layer_provider.changeAttributeValues({id: attr_value})
+
+layer.commitChanges()
+
+
+# permet de sortir l'extent d'une couche
 # processing.run("qgis:polygonfromlayerextent", param)
 
-ce='C:/MrnMicro/temp/Perm5trm.shp'
-nomJeuClasseEntite="TOPO"
-nomClasseEntite="test"
-outGDB='C:/MrnMicro/temp/sdfss.gdb'
-
-processing.run("gdal:convertformat", {'INPUT':ce,
-                                      'OPTIONS':'-lco FEATURE_DATASET={0} -lco XYTOLERANCE=0.02 -nln {1}'.format(nomJeuClasseEntite, nomClasseEntite),
-                                      'OUTPUT':outGDB})
+# ce='C:/MrnMicro/temp/Racc_dif.shp'
+# nomJeuClasseEntite="TOPO"
+# nomClasseEntite="test"
+# outGDB='C:/MrnMicro/temp/sdfss.gdb'
+#
+# processing.run("gdal:convertformat", {'INPUT':ce,
+#                                       'OPTIONS':'-lco FEATURE_DATASET={0} -lco XYTOLERANCE=0.02 -nln {1}'.format(nomJeuClasseEntite, nomClasseEntite),
+#                                       'OUTPUT':outGDB})
 
 # processing.run("gdal:convertformat", {'INPUT':ce,'OPTIONS':'','OUTPUT':outGDB})
 
