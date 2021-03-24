@@ -27,41 +27,48 @@ import sys
 import os
 import subprocess
 import time
-import shutil
 import os.path
 from os import path
-import glob
-import pandas as pd
 import pandas
-import csv
 from processing.tools import dataobjects
 from PyQt5.QtCore import QVariant
 
+# librairies pour la fonction dissolve
+from shapely.geometry import shape, mapping
+from shapely.ops import unary_union
+import fiona
+import itertools
+from operator import itemgetter
+from geopandas import GeoSeries, GeoDataFrame
+import geopandas as gpd
+import pandas as pd
+
+from osgeo import gdal
 
 
-# # Pour faire marcher GRASS en StandAlone script
-# # https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
-# from processing.algs.grass7.Grass7Utils import Grass7Utils
-# Grass7Utils.checkGrassIsInstalled()
-#
-# # Chemin ou QGIS est installer
-# QgsApplication.setPrefixPath(r"C:\MrnMicro\OSGeo4W64\bin", True)
-#
-# # Créer une reference à QgsApplication,
-# # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
-# qgs = QgsApplication([], False)
-#
-# # initialiser QGIS
-# qgs.initQgis()
-#
-# # Initialiser les outils qgis
-# Processing.initialize()
-#
-# # sys.path.append(r'C:\MrnMicro\Applic\OSGeo4W64\apps\qgis-ltr\python\plugins\processing\algs\gdal')
-#
-# # Permet d'utiliser les algorithmes "natif" ecrit en c++
-# # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
-# QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+# Pour faire marcher GRASS en StandAlone script
+# https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
+from processing.algs.grass7.Grass7Utils import Grass7Utils
+Grass7Utils.checkGrassIsInstalled()
+
+# Chemin ou QGIS est installer
+QgsApplication.setPrefixPath(r"C:\Logiciels\OSGeo4W\bin", True)
+
+# Créer une reference à QgsApplication,
+# Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+qgs = QgsApplication([], False)
+
+# initialiser QGIS
+qgs.initQgis()
+
+# Initialiser les outils qgis
+Processing.initialize()
+
+# sys.path.append(r'C:\MrnMicro\Applic\OSGeo4W64\apps\qgis-ltr\python\plugins\processing\algs\gdal')
+
+# Permet d'utiliser les algorithmes "natif" ecrit en c++
+# https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
+QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 
 
@@ -96,7 +103,7 @@ def executeSQL(cursor, req, retour_cursor=True):
             return cursor  #, True
 
     except sqlite3.Error as eSqlite:
-        print(eSqlite.message)
+        print(eSqlite)
 
         raise
 
@@ -114,8 +121,7 @@ def transfererCeGdbToGeoPackage(ce, gdb, gpkg):
             gdb = "E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gdb"
             gpkg = "E:\Temp\geotraitement_QGIS\SharedFiles\ForOri08.gpkg"
 
-            transfererCeGdbToGeoPackage(ce, gdb, gpkg)
-    """
+            transfererCeGdbToGeoPackage(ce, gdb, gpkg)    """
 
     # Classe dentité dans la gdb
     feature = gdb + '|' + 'layername=' + ce
@@ -187,120 +193,6 @@ def updateCursor(ce, champ, valeur, nouvelleValeur):
             indexChamp = fields.indexFromName(champ) # Index du champ
             attr_value = {indexChamp: nouvelleValeur} # Nouvelle valeure
             layer_provider.changeAttributeValues({id: attr_value})
-    layer.commitChanges()
-
-def calculGeocodeOLD(ce, champ, whereclause =''):
-    """Permet de calculer un GEOCODE sur toute la couche ou sur une selection'.
-                Args:
-                    ce : classse d'entité ou lon veut calculer un GEOCODE
-                    champ : le champ ou le calcul de GEOCODE sera fait
-                    whereclause : Expression sql pour faire une selection sur la classe d'entité
-
-                Exemples d'appel de la fonction:
-                ce = "E:/Temp/geotraitement_QGIS/acq4peei.shp"
-                champ = 'GEOCODE' ou'GEOC_FOR' ou 'GEOC_MAJ' etc... (il faut que le champ existe)
-                whereclause(optionnel) = "\"GES_CO\" = 'ENEN'"
-
-                calculGeocode(ce, champ, whereclause)
-        """
-
-    # Verifie si 'ce' est une string ou deja un vectorlayer de QGIS
-    if isinstance(ce, str):
-        layer = QgsVectorLayer(ce, 'lyr', 'ogr')
-    else:
-        layer = ce
-
-    # index = len(list(layer.getFeatures()))
-
-    # Si pas de clause
-    if whereclause == '':
-        feat = layer.getFeatures()
-        geocode = []
-
-        for features in feat:
-
-            # coord = (features.geometry().centroid())
-            coord = (features.geometry().pointOnSurface())
-            geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
-
-    else:
-
-        layer.selectByExpression(whereclause)
-        selection = layer.selectedFeatures()
-        geocode = []
-        for features in selection:
-
-            # coord = (features.geometry().centroid())
-            coord = (features.geometry().pointOnSurface())
-            geocode.append(str(round(coord.get().x(), 2)) + "+" + str(round(coord.get().y(), 2)))
-
-
-    # Mettre la valeur de Geocode dans la champ en remplacant les . par des virgules
-    geocode2 = []
-    i = 0
-    for row in geocode:
-        row2 = geocode[i].replace(".", ",")
-        geocode2.append(row2)
-        i += 1
-
-    # Valeur des Y avec 2 decimales
-    geocode3 = []
-    for row in geocode2:
-        strRow = ''.join(row)
-        tags = strRow.split('+')
-        tags3 = str(tags[1]).split(',')
-        if len(tags3[1]) == 1:
-            row2 = tags[0] + "+" + tags[1] + "0"
-            geocode3.append(row2)
-        else:
-            geocode3.append(row)
-
-
-    # Valeur des X avec 2 decimales et ajout du signe + la ou les X sont positifs
-    geocode4 = []
-    for row in geocode3:
-        strRow = ''.join(row)
-        tags = strRow.split('+')
-
-        string = str(tags[0])
-        substring = "-"
-        tags2 = str(tags[0]).split(',')
-
-        if substring in string:
-            geocode4.append(row)
-        elif len(tags2[1]) == 1:
-            row4 = "+" + tags[0] + "0" + "+" + tags[1]
-            geocode4.append(row4)
-        else:
-            tags[0] = "+" + str(tags[0])
-            row2 = str(tags[0]) + "+" + tags[1]
-            geocode4.append(row2)
-
-
-    # mettre a jour la selection de la classe dentite avec la la liste geocode4
-    layer_provider = layer.dataProvider()
-    if whereclause == '':
-
-        feat = layer.getFeatures()
-        layer.startEditing()
-
-    else:
-
-        layer.selectByExpression(whereclause)
-        feat = layer.selectedFeatures()
-        layer.startEditing()
-
-
-    i=0
-    for feature in feat:
-        id = feature.id()
-        # trouver l'index du champ
-        fields = layer.fields()
-        indexChamp = fields.indexFromName(champ)  # Index du champ
-        attr_value = {indexChamp: geocode4[i]}  # Nouvelle valeure
-        layer_provider.changeAttributeValues({id: attr_value})
-        i+=1
-
     layer.commitChanges()
 
 def calculGeocode(ce, champ, whereclause =''):
@@ -864,6 +756,7 @@ def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = Fal
 
 
 
+
     processing.run("native:intersection", {'INPUT':target_layer,'OVERLAY':join_layer,
                                            'INPUT_FIELDS':['fid', 'UNIQ','SUP1'],'OVERLAY_FIELDS':[],'OVERLAY_FIELDS_PREFIX':'',
                                            'OUTPUT':'ogr:dbname=\'{0}\' table=\"intersect\" (geom) sql='.format(gpkg)})
@@ -933,7 +826,8 @@ def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = Fal
 
     if Pente is False:
 
-        # requete SQL qui permet de grouper les UNIQ avec la plus grande proportion de superposition. cette valeur est dans le champ prop
+        # requete SQL qui permet de grouper les UNIQ avec la plus grande proportion de superposition. cette valeur est dans le champ prop.
+        # la table resultFinal sera cree dan le gpkg
         req = "create table resultFinal as select * from Proportion GROUP BY UNIQ having prop = max(prop)"
 
         # excecuter la requete
@@ -942,13 +836,15 @@ def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = Fal
     else:
 
         # faire une requete pour les pentes
-        # permet de faire une somme des proportion par classes de pente par UNIQ
+        # permet de faire une somme des proportions par classes de pente a l'aide du champ New_id.
+        #  la table SelectionPente sera cree dans le gpkg avec le champ TotalProp
         req = "create table SelectionPente as select *, SUM(prop) TotalProp from Proportion GROUP BY New_id"
 
         # excecuter la requete
         executeSQL(nomcursor, req, retour_cursor=True)
 
-        # permet de prendre le maximum des proportion par UNIQ afin d'avoir la pente le plus représentée
+        # permet de prendre le maximum des proportions par UNIQ dans le champ TotalProp afin d'avoir la pente le plus représentée.
+        #  la table resultFinal sera cree dans le gpkg
         req = "create table resultFinal as select * from SelectionPente GROUP BY UNIQ having TotalProp = max(TotalProp)"
 
         # excecuter la requete
@@ -980,81 +876,333 @@ def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = Fal
         supprimerUnChamp(outfc, "New_Id")
 
 
-        # jeter le csv prop.csv
+    # jeter le csv prop.csv
     os.remove(csvProp)
+
+
+def convertirFGDBtoGPKG(pathGDB):
+
+    # ca marche pas......
+
+
+    listGDB = os.listdir(pathGDB)
+
+
+    try :
+        for fgdb in listGDB:
+
+
+            # fgdb = r"C:\GIS\data\somefilegeodatabase.gdb"
+            # outdb = r"C:\GIS\data\testdata\OK.gpkg" #Has to be created in advance
+
+            gpkg = fgdb.replace('.gdb', '.gpkg')
+            outdb= os.path.join(pathGDB, gpkg)
+
+            feature_class_list = fiona.listlayers(os.path.join(pathGDB,fgdb))
+
+            #Write to geopackage
+            for fc in feature_class_list:
+
+                # ce = '{0}'.format(fgdb) + '|' + 'layername=' + '{0}'.format(fc)
+                #
+                # # faire un layer avec la string
+                # layer = QgsVectorLayer(ce, '{0}'.format(fc), 'ogr')
+                #
+                # # options de sauvegarde
+                # options = QgsVectorFileWriter.SaveVectorOptions()
+                # options.driverName = 'GPKG'
+                # options.layerName = '{0}'.format(fc)
+                # QgsVectorFileWriter.writeAsVectorFormat(layer, outdb, options)
+
+
+                gdbLyr = QgsVectorLayer("{0}|layername={1}".format(fgdb, fc), fc, "ogr")
+                print('Writing: ', fc)
+                options = QgsVectorFileWriter.SaveVectorOptions()
+                options.driverName = "GPKG"
+                options.layerName = fc
+                options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                options.EditionCapability = 0 #CanAddNewLayer
+                # QgsVectorFileWriter.writeAsVectorFormat(gdbLyr, outdb, options)
+
+                QgsVectorFileWriter.writeAsVectorFormatV2(gdbLyr, outdb, QgsCoordinateTransformContext(), options)
+
+    except :
+        pass
+
+def convertirFGDBtoGPKGogr(pathGDB):
+
+    listGDB = os.listdir(pathGDB)
+
+    try :
+
+        for fgdb in listGDB:
+
+            print("Traitement de la GDB : {}".format(fgdb))
+
+            gpkg = fgdb.replace('.gdb', '.gpkg')
+            outdb= os.path.join(pathGDB, gpkg)
+
+            gdb = os.path.join(pathGDB,fgdb)
+
+            cmd = r"""ogr2ogr -append -f GPKG {0} {1}""".format(outdb, gdb)
+            subprocess.call(cmd)
+
+    except :
+        pass
+
+def dissolveFiona(gpkg, nomInput, nomOutput, fields):
+
+    layer = gpd.read_file(gpkg, layer=nomInput)
+    layer.fillna('null')
+    with fiona.open(gpkg, layer='{0}'.format(nomInput)) as input:
+        with fiona.open(gpkg, 'w', layer='{0}'.format(nomOutput), **input.meta) as output:
+            grouper = itemgetter(*fields)
+            key = lambda k: grouper(k['properties'])
+            for k, group in itertools.groupby(sorted(input, key=key), key):
+                properties, geom = zip(*[(feature['properties'], shape(feature['geometry'])) for feature in group])
+                output.write({'geometry': mapping(unary_union(geom)), 'properties': properties[0]})
+
+# marche juste avec 1 champ
+def dissolveGDAL(input, output, fields):
+    cmd = r"""ogr2ogr {1} {0} -dialect sqlite -sql "SELECT ST_Union(geometry), {2} FROM {0} GROUP BY {2}""".format(input, output, fields)
+    subprocess.call(cmd)
+
+
+# https://geopandas.org/io.html
+def dissolvedGeopandasGPKG(gpkg, namefc, nameoutfc, fields = None, singlepart = False):
+
+    if fields is None:
+        layer = gpd.read_file(gpkg, layer=namefc)
+        gdfu = layer.unary_union
+        new = gpd.GeoDataFrame(crs=layer.crs, geometry=[gdfu])
+        new.to_file(gpkg, layer=nameoutfc, driver="GPKG")
+
+    else:
+        layer = gpd.read_file(gpkg, layer=namefc)
+
+        filled = layer.fillna('null')
+
+        print('Dissolve')
+
+        dissolved = filled.dissolve(by=fields, aggfunc = 'last', as_index=False)
+        print('Copie')
+        dissolved.to_file(gpkg, layer=nameoutfc, driver="GPKG")
+
+    if singlepart:
+        outputSP = nameoutfc+"SP"
+        multi2single(gpkg, nameoutfc, outputSP)
+
+    else:
+        pass
+
+def remplace_None_par_null(layer):
+
+    with edit(layer):
+        for feat in layer.getFeatures():
+            for field in feat.fields().names():
+                if feat[field] == None:
+                    feat[field] = 'null'
+            layer.updateFeature(feat)
+
+def remplace_null_par_None(layer):
+
+    with edit(layer):
+        for feat in layer.getFeatures():
+            for field in feat.fields().names():
+                if feat[field] == 'null':
+                    feat[field] = None
+            layer.updateFeature(feat)
+
+def multi2single(gpkg,input,outputSP):
+
+    gpdf = gpd.read_file(gpkg, layer=input)
+    gpdf_singlepoly = gpdf[gpdf.geometry.type == 'Polygon']
+    gpdf_multipoly = gpdf[gpdf.geometry.type == 'MultiPolygon']
+
+    for i, row in gpdf_multipoly.iterrows():
+        Series_geometries = pd.Series(row.geometry)
+        df = pd.concat([gpd.GeoDataFrame(row, crs=gpdf_multipoly.crs).T]*len(Series_geometries), ignore_index=True)
+        df['geometry']  = Series_geometries
+        gpdf_singlepoly = pd.concat([gpdf_singlepoly, df])
+
+    gpdf_singlepoly.reset_index(inplace=True, drop=True)
+    gpdf_singlepoly.to_file(gpkg, layer=outputSP, driver="GPKG")
+
+def dissolvePyqgis(input, gpkg, nomDissolved, fields):
+
+    if isinstance(input, str):
+        input = QgsVectorLayer(input, 'ce', 'ogr')
+    else:
+        input = input
+
+    processing.run("native:dissolve", {'INPUT':input,'FIELD':fields,
+                                       'OUTPUT':'ogr:dbname=\'{0}\' table=\"{1}\" (geom) sql='.format(gpkg, nomDissolved)})
 
 
 if __name__ == '__main__':
 
     tempsDebut = time.time()
 
-    target_features = r'C:\MrnMicro\temp\For_sub_2.shp'
-    # target_features = 'C:/MrnMicro/temp/ForOri07.gpkg|layername=For_sub_2'
-    # join_features = r'C:\MrnMicro\temp\For_sub_3.shp'
-    # join_features = r'C:\MrnMicro\temp\ecologie_sub.shp'
-    join_features = 'C:/MrnMicro/temp/pente.gpkg|layername=Pente_clip_RepairSP'
-    outfc = r'C:\MrnMicro\temp\join.shp'
+    # input = os.path.join(r"C:\MrnMicro\temp\test_dissolve_fiona","input.shp" )
+    # dissolved = os.path.join(r"C:\MrnMicro\temp\test_dissolve_fiona","input_dissolved.shp")
+    # fields = 'CO_TER'
+
+    # dissolveGDAL(input, dissolved, fields)
+
+    # gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
+    # ce ='HISTO_MAJF_2018_Repair'
+    # out = 'HISTO_MAJF_2018_diss'
+    # fields = 'CO_TER'
 
 
-    # target_features = "C:/MrnMicro/temp/ForOri07.gdb|layername=ForS5_fus"
-    # join_features = "C:/MrnMicro/temp/CARTE_ECOLOGIQUE_5E.gdb|CARTE_ECOLOGIQUE_5E"
-    # #
-    # outfc = "C:/MrnMicro/temp/temp.gpkg|layername=join"
-    # bd = r"C:\MrnMicro\temp\temp.gpkg"
+
+    # gpkg = (r"C:\MrnMicro\temp\test_dissolve_fiona\test_dissolve_fiona.gpkg")
+    # ce = 'input'
+    # out = 'dissolved'
+    # fields = 'DEP_SUR'
+
+
+    # dissolveFiona(gpkg, ce, out, fields)
+
+    # dissolvedGeopandasGPKG(gpkg, ce, out, fields, singlepart = False)
+
+    # dissolvePyqgis(ce, gpkg, out, fields)
+
+    target_features = r"C:\MrnMicro\temp\test_join\FOR_repair.shp"
+    join_features =r"C:\MrnMicro\temp\test_join\Pente_repair.shp"
+    outfc =r"C:\MrnMicro\temp\test_join\join.shp"
+
+    spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = True)
+
+
+    temps_final = time.time()
+    temp_tot = round((temps_final - tempsDebut) / 60, 2)
+    print("Le temps total de traitement est de : {} minutes".format(temp_tot))
+
+
+
+
+    # pet4 = r"C:\Users\gaudaf\Desktop\Nouveau dossier\pee4_gdb_exportArcMap.shp"
+    #
+    # # fields = "SUPERFICIE"
+    # # with arcpy.da.SearchCursor(pet4, fields) as cursor:
+    # #     for row in cursor:
+    # #         sup = row[0]
+    # #         print(sup)
+    #
+    # layer = QgsVectorLayer(pet4, 'lyr', 'ogr')
+    # field = "SUPERFCIE"
+    #
+    # features = layer.getFeatures()
+    #
+    # for ft in features:
+    #     attrs = ft.attributes()
+    #     print (attrs)
+    #
+
+
+
+
+
+
+    #
+    # tempsDebut = time.time()
+    #
+    # target_features = r'C:\MrnMicro\temp\For_sub_2.shp'
+    # # target_features = 'C:/MrnMicro/temp/ForOri07.gpkg|layername=For_sub_2'
+    # # join_features = r'C:\MrnMicro\temp\For_sub_3.shp'
+    # # join_features = r'C:\MrnMicro\temp\ecologie_sub.shp'
+    # join_features = 'C:/MrnMicro/temp/pente.gpkg|layername=Pente_clip_RepairSP'
+    # outfc = r'C:\MrnMicro\temp\join.shp'
+    #
+    #
+    #
+    # Pente = True
+    # spatialJoinLargestOverlap(target_features, join_features,outfc, Pente)
+    #
+    #
+    # timeTot = time.time()
+    # temp_tot = round((timeTot - tempsDebut) / 60, 4)
+    # print(temp_tot)
+
+
+    # https://www.sqlitetutorial.net/
+    #
+    # # Ce que j’ai essayé pour la mise à jour d’un champ
+    # import sqlite3
+    # bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
+    # bd2 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bd2.gpkg"
+    # conn = sqlite3.connect(bd2)
+    # cursor = conn.cursor()
+    #
+    # # req = " ".join([
+    # #     "UPDATE tbl_copy",
+    # #     "SET caract='BLA'"
+    # # ])
+    #
+    #
+    # req = "ALTER TABLE tbl_copy ADD BLA varchar(255)"
+    #
+    # cursor.execute(req)
+    # conn.commit()
+    # conn.close()
+
+    #
+    # import sqlite3
+    # bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
+    # bd2 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bd2.gpkg"
+    #
+    #
+    # # req = " ".join([
+    # #     "UPDATE tbl_copy",
+    # #     "SET caract='BLA'"
+    # # ])
+    #
     #
     # # faire la connection avec la bd
-    # nomconnection, nomcursor = connec_sqlite(bd)
+    # nomconnection, nomcursor = connec_sqlite(bd1)
     #
-    # # requete SQL qui permet de grouper les objectid avec la plus grande proportion de superposition. cette valeur est dans le champ prop
-    # req = "select * from prop GROUP BY OBJECTID having prop = max(prop)"
+    # # req = "ALTER TABLE tbl_copy ADD BLA varchar(12)" # Si je mets varchar(xxxx), QGIS ne voit pas le champ, mais ESRI oui......
+    # # req = "ALTER TABLE tbl_copy ADD BLA"
+    # req = "UPDATE tableJoin SET col_int = 1"
     #
     # # excecuter la requete
-    # selection = executeSQLite(nomcursor, req, retour_cursor=True)
-
-    Pente = True
-    spatialJoinLargestOverlap(target_features, join_features,outfc, Pente)
+    # executeSQL(nomcursor, req, retour_cursor=True)
 
 
-    # input_files = r"C:\MrnMicro\temp\prop.csv"
-    # bd_sqlite = r"C:\MrnMicro\temp\Proportion.sqlite"
-    # nomconnection, nomcursor = connec_sqlite(bd_sqlite)
-    # # df = pandas.read_csv(input_files)
-    # # df.to_sql("Proportion", nomconnection, if_exists='append', index=False)
+
+    # # Ce que j’ai essayé pour un joint de table
+    # bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
+    # bd2 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bd2.gpkg"
     #
-    # req = "CREATE TABLE test"
-    # selection = executeSQLite(nomcursor, req, retour_cursor=True)
-
-    # req = "INSERT INTO Proportion.TABLE SELECT * FROM resultat.TABLE"
-    # executeSQLite(selection, req, retour_cursor=True)
-
-
-
-
-    # liste = list(selection.fetchall())
-    # print(liste)
-
-
-    # executeSQLite(selection, req, retour_cursor=True)
-
-
-
-
-
-
-
-    # layer = QgsVectorLayer(target_features, 'lyr', 'ogr')
-    # options_CSV = QgsVectorFileWriter.SaveVectorOptions()
-    # options_CSV.driverName = "CSV"
+    # conn = sqlite3.connect(bd1)
+    # conn.execute("ATTACH DATABASE '" + bd2 + "' AS data2")
     #
-    # QgsVectorFileWriter.writeAsVectorFormatV2(layer, r'C:\MrnMicro\temp\xyz.csv', QgsCoordinateTransformContext(), options_CSV)
+    #
+    # req = " ".join([
+    #     "UPDATE ecoulements as SELECT * from ecoulements",
+    #     "LEFT JOIN data2.tbl_copy",
+    #     "ON ecoulements.fid = data2.tbl_copy.fid"
+    # ])
+    #
+    # req = "create table tableJoin as select * from ecoulements LEFT JOIN data2.tbl_copy on ecoulements.fid = data2.tbl_copy.fid"
 
-    timeTot = time.time()
-    temp_tot = round((timeTot - tempsDebut) / 60, 4)
-    print(temp_tot)
+    # conn.execute(req)
+    # conn.commit()
+    # conn.close()
+    #
+    #
+    #
+    # # Pour supprimer une table
+    # bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
+    # conn = sqlite3.connect(bd1)
+    # conn.execute("DROP TABLE ecoulements_bruts_ZM")
+    # conn.commit()
+    # conn.close()
 
-    # initialiserQGIS()
 
-    # cmd = r"""ogr2ogr -append -F SQLITE C:\MrnMicro\temp\CLASSI_ECO_IEQM.sqlite C:\MrnMicro\temp\CLASSI_ECO_IEQM.gdb -dsco spatialite=yes -preserve_fid"""
+
+# cmd = r"""ogr2ogr -append -F SQLITE C:\MrnMicro\temp\CLASSI_ECO_IEQM.sqlite C:\MrnMicro\temp\CLASSI_ECO_IEQM.gdb -dsco spatialite=yes -preserve_fid"""
     # subprocess.call(cmd)
 
     # ce = 'ForS5_fus'

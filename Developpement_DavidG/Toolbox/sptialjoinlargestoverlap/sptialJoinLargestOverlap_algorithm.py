@@ -124,7 +124,7 @@ class sptialJoinLargestOverlapAlgorithm(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Join spatial plus grande superposition'
+        return 'Jointure spatiale - Plus grande superposition'
 
     def displayName(self):
         """
@@ -149,6 +149,9 @@ class sptialJoinLargestOverlapAlgorithm(QgsProcessingAlgorithm):
         formatting characters.
         """
         return ''
+    def icon(self):
+
+        return QIcon(os.path.dirname(__file__) + '/image/SpatialJoin.png')
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

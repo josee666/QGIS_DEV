@@ -32,7 +32,8 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
 from .sptialJoinLargestOverlap_algorithm import sptialJoinLargestOverlapAlgorithm
-
+from qgis.PyQt.QtGui import QIcon
+import os
 
 class sptialJoinLargestOverlapProvider(QgsProcessingProvider):
 
@@ -72,14 +73,11 @@ class sptialJoinLargestOverlapProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return self.tr('Join spatial plus grande superposition')
+        return self.tr('Jointure Spatiale Superposition')
 
     def icon(self):
-        """
-        Should return a QIcon which is used for your provider inside
-        the Processing toolbox.
-        """
-        return QgsProcessingProvider.icon(self)
+
+        return QIcon(os.path.dirname(__file__) + '/image/Overlap2_large.png')
 
     def longName(self):
         """
