@@ -5,7 +5,7 @@
 """
 Auteur:
 
-Par David Gauthier
+Par David Gauthier \ Phillipe Leblanc
 
 Division des systemes d'information et du pilotage
 Direction des inventaires forestiers
@@ -64,13 +64,10 @@ qgs.initQgis()
 # Initialiser les outils qgis
 Processing.initialize()
 
-# sys.path.append(r'C:\MrnMicro\Applic\OSGeo4W64\apps\qgis-ltr\python\plugins\processing\algs\gdal')
 
 # Permet d'utiliser les algorithmes "natif" ecrit en c++
 # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
 QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-
-
 
 
 def connec_sqlite(nombd):
@@ -516,6 +513,20 @@ def separerJeuClasseEntite(ce, reptrav, x, y, ESPG = 32198):
 
 def calculerSuperficieAlbers(ce):
 
+    """
+     Permet de caluler le champs SUPERFICIE en Canada_Albers_Equal_Area_Conic (ESRI:102001)
+
+               Args:
+                   ce : classe d'entité
+
+               Exemple d'appel de la fonction:
+
+               ce = r"C:\MrnMicro\temp\ecofor.shp"
+
+               calculerSuperficieAlbers(ce)
+
+        """
+
     # faire un layer avec ce
     if isinstance(ce, str):
         layer = QgsVectorLayer(ce, 'lyr', 'ogr')
@@ -636,6 +647,22 @@ def convertListForSqlQuery(list):
 
 def supprimerUnChamp(fc, champ):
 
+    """
+    Permet de supprimer un champ
+
+              Args:
+                  ce : classe d'entité
+                  champ : nom du champ
+
+              Exemple d'appel de la fonction:
+
+              ce = r"C:\MrnMicro\temp\ecofor.shp"
+              champ : "SUPERFICIE"
+
+              calculerSuperficieAlbers(ce,champ)
+
+       """
+
     layer_fc = QgsVectorLayer(fc, 'lyr', 'ogr')
     layer_provider = layer_fc.dataProvider()
     fields = layer_fc.fields()
@@ -646,6 +673,25 @@ def supprimerUnChamp(fc, champ):
 
 
 def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = False):
+
+    """
+   Permet de faire un intersect entre 2 classe d'entité et de garder les valeurs attributaires du "join_features"
+   qui sont représenté avec la plus grande superpostion.
+
+   Je dois mieux documenter la description de la fonction
+
+             Args:
+                 ce : classe d'entité
+                 champ : nom du champ
+
+             Exemple d'appel de la fonction:
+
+             ce = r"C:\MrnMicro\temp\ecofor.shp"
+             champ : "SUPERFICIE"
+
+             calculerSuperficieAlbers(ce,champ)
+
+      """
     
     # Geopackage temporaire
     gpkg = os.path.join(r"C:\MrnMicro\temp","temp.gpkg")
@@ -752,9 +798,6 @@ def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = Fal
     # faire un intersect
     # intersect = processing.run("native:intersection", {'INPUT':target_layer,'OVERLAY':join_layer,'INPUT_FIELDS':[],
     #                                                    'OVERLAY_FIELDS':[],'OVERLAY_FIELDS_PREFIX':'','OUTPUT': QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
-
-
-
 
 
     processing.run("native:intersection", {'INPUT':target_layer,'OVERLAY':join_layer,
@@ -880,56 +923,22 @@ def spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = Fal
     os.remove(csvProp)
 
 
-def convertirFGDBtoGPKG(pathGDB):
-
-    # ca marche pas......
-
-
-    listGDB = os.listdir(pathGDB)
-
-
-    try :
-        for fgdb in listGDB:
-
-
-            # fgdb = r"C:\GIS\data\somefilegeodatabase.gdb"
-            # outdb = r"C:\GIS\data\testdata\OK.gpkg" #Has to be created in advance
-
-            gpkg = fgdb.replace('.gdb', '.gpkg')
-            outdb= os.path.join(pathGDB, gpkg)
-
-            feature_class_list = fiona.listlayers(os.path.join(pathGDB,fgdb))
-
-            #Write to geopackage
-            for fc in feature_class_list:
-
-                # ce = '{0}'.format(fgdb) + '|' + 'layername=' + '{0}'.format(fc)
-                #
-                # # faire un layer avec la string
-                # layer = QgsVectorLayer(ce, '{0}'.format(fc), 'ogr')
-                #
-                # # options de sauvegarde
-                # options = QgsVectorFileWriter.SaveVectorOptions()
-                # options.driverName = 'GPKG'
-                # options.layerName = '{0}'.format(fc)
-                # QgsVectorFileWriter.writeAsVectorFormat(layer, outdb, options)
-
-
-                gdbLyr = QgsVectorLayer("{0}|layername={1}".format(fgdb, fc), fc, "ogr")
-                print('Writing: ', fc)
-                options = QgsVectorFileWriter.SaveVectorOptions()
-                options.driverName = "GPKG"
-                options.layerName = fc
-                options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                options.EditionCapability = 0 #CanAddNewLayer
-                # QgsVectorFileWriter.writeAsVectorFormat(gdbLyr, outdb, options)
-
-                QgsVectorFileWriter.writeAsVectorFormatV2(gdbLyr, outdb, QgsCoordinateTransformContext(), options)
-
-    except :
-        pass
-
 def convertirFGDBtoGPKGogr(pathGDB):
+
+    """
+    Permet de convertir des FGDB de ESRI en Geopackage avec GDAL
+
+              Args:
+                  pathGDB : chemin ou se trouve les FGDB
+
+
+              Exemple d'appel de la fonction:
+
+              pathGDB = r"C:\MrnMicro\temp"
+
+              convertirFGDBtoGPKGogr(pathGDB)
+
+       """
 
     listGDB = os.listdir(pathGDB)
 
@@ -950,26 +959,53 @@ def convertirFGDBtoGPKGogr(pathGDB):
     except :
         pass
 
-def dissolveFiona(gpkg, nomInput, nomOutput, fields):
-
-    layer = gpd.read_file(gpkg, layer=nomInput)
-    layer.fillna('null')
-    with fiona.open(gpkg, layer='{0}'.format(nomInput)) as input:
-        with fiona.open(gpkg, 'w', layer='{0}'.format(nomOutput), **input.meta) as output:
-            grouper = itemgetter(*fields)
-            key = lambda k: grouper(k['properties'])
-            for k, group in itertools.groupby(sorted(input, key=key), key):
-                properties, geom = zip(*[(feature['properties'], shape(feature['geometry'])) for feature in group])
-                output.write({'geometry': mapping(unary_union(geom)), 'properties': properties[0]})
-
-# marche juste avec 1 champ
-def dissolveGDAL(input, output, fields):
-    cmd = r"""ogr2ogr {1} {0} -dialect sqlite -sql "SELECT ST_Union(geometry), {2} FROM {0} GROUP BY {2}""".format(input, output, fields)
-    subprocess.call(cmd)
+# def dissolveFiona(gpkg, nomInput, nomOutput, fields):
+#
+#     layer = gpd.read_file(gpkg, layer=nomInput)
+#     layer.fillna('null')
+#     with fiona.open(gpkg, layer='{0}'.format(nomInput)) as input:
+#         with fiona.open(gpkg, 'w', layer='{0}'.format(nomOutput), **input.meta) as output:
+#             grouper = itemgetter(*fields)
+#             key = lambda k: grouper(k['properties'])
+#             for k, group in itertools.groupby(sorted(input, key=key), key):
+#                 properties, geom = zip(*[(feature['properties'], shape(feature['geometry'])) for feature in group])
+#                 output.write({'geometry': mapping(unary_union(geom)), 'properties': properties[0]})
+#
+# # marche juste avec 1 champ
+# def dissolveGDAL(input, output, fields):
+#     cmd = r"""ogr2ogr {1} {0} -dialect sqlite -sql "SELECT ST_Union(geometry), {2} FROM {0} GROUP BY {2}""".format(input, output, fields)
+#     subprocess.call(cmd)
 
 
 # https://geopandas.org/io.html
 def dissolvedGeopandasGPKG(gpkg, namefc, nameoutfc, fields = None, singlepart = False):
+
+    """
+    Permet de faire un dissolve avec Geopandas dans un geopackage
+    Geopandas ne gere pas encore les valeur Null lors du dissole. C'est pour ca que je rempli
+    les valeurs Null pas une string "null"
+
+              Args:
+                  gpkg : geopackage
+                  namefc : nom de la classe d'entité
+                  nameoutfc : nom de la classe d'entité en sortie
+                  fields : champ
+                  singlepart = faire un multi part ou single part
+
+
+              Exemple d'appel de la fonction:
+
+              gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
+              ce ='HISTO_MAJF_2018_Repair'
+              out = 'HISTO_MAJF_2018_diss'
+              fields = 'CO_TER'
+              singlepart = False
+
+              dissolvedGeopandasGPKG(gpkg, ce, out, fields, singlepart)
+
+
+       """
+
 
     if fields is None:
         layer = gpd.read_file(gpkg, layer=namefc)
@@ -979,13 +1015,10 @@ def dissolvedGeopandasGPKG(gpkg, namefc, nameoutfc, fields = None, singlepart = 
 
     else:
         layer = gpd.read_file(gpkg, layer=namefc)
-
         filled = layer.fillna('null')
 
-        print('Dissolve')
-
         dissolved = filled.dissolve(by=fields, aggfunc = 'last', as_index=False)
-        print('Copie')
+
         dissolved.to_file(gpkg, layer=nameoutfc, driver="GPKG")
 
     if singlepart:
@@ -1013,9 +1046,28 @@ def remplace_null_par_None(layer):
                     feat[field] = None
             layer.updateFeature(feat)
 
-def multi2single(gpkg,input,outputSP):
+def multi2single(gpkg,ce,outputSP):
 
-    gpdf = gpd.read_file(gpkg, layer=input)
+    """
+   Permet de un multipart to single part avec Geopandas
+
+             Args:
+                 gpkg : geopackage
+                 ce : classe d'entité
+                 outputSP : sortie
+
+
+             Exemple d'appel de la fonction:
+
+             gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
+             ce ='HISTO_MAJF_2018'
+             outputSP = 'HISTO_MAJF_2018_sp'
+
+             multi2single(gpkg,ce,outputSP)
+
+      """
+
+    gpdf = gpd.read_file(gpkg, layer=ce)
     gpdf_singlepoly = gpdf[gpdf.geometry.type == 'Polygon']
     gpdf_multipoly = gpdf[gpdf.geometry.type == 'MultiPolygon']
 
@@ -1028,14 +1080,39 @@ def multi2single(gpkg,input,outputSP):
     gpdf_singlepoly.reset_index(inplace=True, drop=True)
     gpdf_singlepoly.to_file(gpkg, layer=outputSP, driver="GPKG")
 
-def dissolvePyqgis(input, gpkg, nomDissolved, fields):
+
+def dissolvePyqgis(ce, gpkg, nomDissolved, fields):
+
+    """
+    Permet de faire un dissolve avec QGIS
+
+
+              Args:
+                  ce : nom de la classe d'entité
+                  gpkg : geopackage
+                  nomDissolved : nom de la classe d'entité en sortie
+                  fields : champ
+
+
+              Exemple d'appel de la fonction:
+
+              ce = 'input'
+              gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\test_dissolve_fiona.gpkg"
+              out = 'dissolved'
+              fields = 'DEP_SUR'
+
+              dissolvePyqgis(ce, gpkg, out, fields)
+
+
+       """
+
 
     if isinstance(input, str):
         input = QgsVectorLayer(input, 'ce', 'ogr')
     else:
         input = input
 
-    processing.run("native:dissolve", {'INPUT':input,'FIELD':fields,
+    processing.run("native:dissolve", {'INPUT':ce,'FIELD':fields,
                                        'OUTPUT':'ogr:dbname=\'{0}\' table=\"{1}\" (geom) sql='.format(gpkg, nomDissolved)})
 
 
@@ -1049,10 +1126,10 @@ if __name__ == '__main__':
 
     # dissolveGDAL(input, dissolved, fields)
 
-    # gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
-    # ce ='HISTO_MAJF_2018_Repair'
-    # out = 'HISTO_MAJF_2018_diss'
-    # fields = 'CO_TER'
+    gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
+    ce ='HISTO_MAJF_2018_Repair'
+    out = 'HISTO_MAJF_2018_diss'
+    fields = 'CO_TER'
 
 
 
@@ -1064,7 +1141,7 @@ if __name__ == '__main__':
 
     # dissolveFiona(gpkg, ce, out, fields)
 
-    # dissolvedGeopandasGPKG(gpkg, ce, out, fields, singlepart = False)
+    dissolvedGeopandasGPKG(gpkg, ce, out, fields, singlepart = False)
 
     # dissolvePyqgis(ce, gpkg, out, fields)
 
