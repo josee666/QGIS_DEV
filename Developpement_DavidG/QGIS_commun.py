@@ -5,7 +5,8 @@
 """
 Auteur:
 
-Par David Gauthier \ Phillipe Leblanc
+Par David Gauthier \ Phillipe Leblanc\ Josée Martel\ Yahoo
+
 
 Division des systemes d'information et du pilotage
 Direction des inventaires forestiers
@@ -32,6 +33,9 @@ from os import path
 import pandas
 from processing.tools import dataobjects
 from PyQt5.QtCore import QVariant
+from serviceBdSqlite import *
+
+from pandas import DataFrame
 
 # librairies pour la fonction dissolve
 from shapely.geometry import shape, mapping
@@ -42,7 +46,7 @@ from operator import itemgetter
 from geopandas import GeoSeries, GeoDataFrame
 import geopandas as gpd
 import pandas as pd
-
+import rtree
 from osgeo import gdal
 
 
@@ -81,6 +85,8 @@ def connec_sqlite(nombd):
     import sqlite3
     nomconnection = None
     nomconnection = sqlite3.connect(nombd)
+    nomconnection.enable_load_extension(True)
+    nomconnection.load_extension("mod_spatialite")
     nomcursor = nomconnection.cursor()
     return nomconnection, nomcursor
 
@@ -620,11 +626,13 @@ def calculateAttributes(layer, field, expression, selection=False):
     if not selection:
         with edit(layer):
             for feature in layer.getFeatures():
+
                 feature.setAttribute(feature.fieldNameIndex(field), eval(expression))
                 layer.updateFeature(feature)
     elif selection:
         with edit(layer):
             for feature in layer.getSelectedFeatures():
+
                 feature.setAttribute(feature.fieldNameIndex(field), eval(expression))
                 layer.updateFeature(feature)
 
@@ -1049,7 +1057,7 @@ def remplace_null_par_None(layer):
 def multi2single(gpkg,ce,outputSP):
 
     """
-   Permet de un multipart to single part avec Geopandas
+   Permet de faire un multipart to single part avec Geopandas
 
              Args:
                  gpkg : geopackage
@@ -1115,10 +1123,124 @@ def dissolvePyqgis(ce, gpkg, nomDissolved, fields):
     processing.run("native:dissolve", {'INPUT':ce,'FIELD':fields,
                                        'OUTPUT':'ogr:dbname=\'{0}\' table=\"{1}\" (geom) sql='.format(gpkg, nomDissolved)})
 
+# def intersect():
+#     layergrille_placettes = QgsVectorLayer(grille_placettes, 'lyr', 'ogr')
+#     layerrepair_us = QgsVectorLayer(repair_us, 'lyr', 'ogr')
+#
+#     print("index")
+#     QgsSpatialIndex(layergrille_placettes.getFeatures())
+#     QgsSpatialIndex(layerrepair_us.getFeatures())
+#
+#     print("intersect")
+#     for f in layergrille_placettes.getFeatures():
+#         for a in layerrepair_us.getFeatures():
+#             if a.geometry().intersects(f.geometry()):
+#                 df_placettes_metadata_us = a.geometry().intersection(f.geometry())
+
+
+
+
 
 if __name__ == '__main__':
 
     tempsDebut = time.time()
+
+
+    reptrav = r"C:\MrnMicro\temp"
+    # gpkg = os.path.join(reptrav,"grilleCopie.gpkg")
+    gpkg = os.path.join(reptrav,"out.sqlite")
+
+    serviceBD = ServiceBdSqlite(gpkg, mode_spatialite = True)
+    serviceBD.sqlite3_etablir_connexion()
+
+    # # Ca crée un dissolve
+    # req = "CREATE Table Dissolve as " \
+    #       "Select ST_Union(geom) as geometry, CO_TER, SREG_ECO " \
+    #       "FROM CO_TER_EAU_INO " \
+    #       "GROUP BY CO_TER, SREG_ECO"
+
+    # # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le dissolve fait
+    # # Nous allons copier les valeurs de CO_TER_EAU_INO
+    # req = """ insert into gpkg_contents select 'Dissolve', data_type, 'Dissolve', description, last_change, min_x, min_y, max_x, max_y, srs_id
+    #         from gpkg_contents where table_name = 'CO_TER_EAU_INO'
+    #         """
+    # serviceBD.executeRequete(req, commit=True)
+    #
+    # # Permet d'ajouter dasn la table gpkg_geometry_columns du GEOPAKAGE une ligne avec le dissolve fait
+    # # Nous allons copier les valeurs de CO_TER_EAU_INO
+    # req = """ insert into gpkg_geometry_columns
+    #         select 'Dissolve', column_name, geometry_type_name, srs_id, z, m
+    #         from gpkg_geometry_columns where table_name = 'CO_TER_EAU_INO'
+    #         """
+    #
+    #
+    # serviceBD.executeRequete(req, commit=True)
+
+
+    # Ca crée un intersect
+
+    # req = "CREATE Table grille_placettes_pente as " \
+    #       "Select * " \
+    #       "FROM grille_placettes, DDE_20K_CLA_PEN_VUE_SE_1415CE " \
+    #       "WHERE st_intersects(grille_placettes.geom, DDE_20K_CLA_PEN_VUE_SE_1415CE.geom)" \
+    #
+    # req = "CREATE Table grille_placettes_FOR_sub4 as "\
+    #       "select a.plac_ID, a.geom, b.GEOC_FOR " \
+    #       "from grille_placette_sub a, Peuplement_for_sub b "\
+    #       "where ST_Intersects(a.geom , b.geom) " \
+
+
+    req = "CREATE Table grille_placettes_FOR_TOT as " \
+          "select a.plac_ID, a.geom, b.GEOC_FOR " \
+          "from grille_placettes a, Peuplement_FOR b " \
+          "where ST_Intersects(a.geom , b.geom) " \
+
+    # req = "CREATE Table grille_placettes_FOR_TOT as " \
+    #       "Select * " \
+    #       "FROM vgpkg_grille_placettes, vgpkg_Peuplement_FOR " \
+    #       "WHERE st_intersects(vgpkg_grille_placettes.geom, vgpkg_Peuplement_FOR.geom)" \
+
+
+    # req = "CREATE Table grille_placettes_FOR_TOT as " \
+    #       "select a.fid, a.geom from vgpkg_grille_placette_sub a " \
+    #       "INNER JOIN vgpkg_Peuplement_for_sub b " \
+    #       "ON (ST_Intersects(a.geom , b.geom))"
+
+
+    serviceBD.executeRequete(req, commit=True)
+
+
+    # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le grille_placettes_pente fait
+    # Nous allons copier les valeurs de grille_placettes
+    req = """ insert into gpkg_contents select 'grille_placettes_FOR_TOT', data_type, 'grille_placettes_FOR_TOT', description, last_change, min_x, min_y, max_x, max_y, srs_id
+            from gpkg_contents where table_name = 'grille_placette_sub'
+            """
+    serviceBD.executeRequete(req, commit=True)
+
+    # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le grille_placettes_pente fait
+    # Nous allons copier les valeurs de grille_placettes
+    req = """ insert into gpkg_geometry_columns
+            select 'grille_placettes_FOR_TOT', column_name, geometry_type_name, srs_id, z, m
+            from gpkg_geometry_columns where table_name = 'grille_placette_sub'
+            """
+
+
+    serviceBD.executeRequete(req, commit=True)
+
+
+
+
+
+
+    print('afs')
+
+
+
+    # x = 1000
+    # y = 1000
+    # us = r"E:\ADG\SONAR\1415CE\Intrants\US_1415CE.shp"
+    # reptrav = r"C:\MrnMicro\temp"
+    # grille_tuiles, grille_placettes = grilleSondage(us, reptrav, x, y)
 
     # input = os.path.join(r"C:\MrnMicro\temp\test_dissolve_fiona","input.shp" )
     # dissolved = os.path.join(r"C:\MrnMicro\temp\test_dissolve_fiona","input_dissolved.shp")
@@ -1126,30 +1248,30 @@ if __name__ == '__main__':
 
     # dissolveGDAL(input, dissolved, fields)
 
-    gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
-    ce ='HISTO_MAJF_2018_Repair'
-    out = 'HISTO_MAJF_2018_diss'
-    fields = 'CO_TER'
-
-
-
-    # gpkg = (r"C:\MrnMicro\temp\test_dissolve_fiona\test_dissolve_fiona.gpkg")
-    # ce = 'input'
-    # out = 'dissolved'
-    # fields = 'DEP_SUR'
-
-
-    # dissolveFiona(gpkg, ce, out, fields)
-
-    dissolvedGeopandasGPKG(gpkg, ce, out, fields, singlepart = False)
-
-    # dissolvePyqgis(ce, gpkg, out, fields)
-
-    target_features = r"C:\MrnMicro\temp\test_join\FOR_repair.shp"
-    join_features =r"C:\MrnMicro\temp\test_join\Pente_repair.shp"
-    outfc =r"C:\MrnMicro\temp\test_join\join.shp"
-
-    spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = True)
+    # gpkg = r"C:\MrnMicro\temp\test_dissolve_fiona\HISTO_MAJF_2018.gpkg"
+    # ce ='HISTO_MAJF_2018_Repair'
+    # out = 'HISTO_MAJF_2018_diss'
+    # fields = 'CO_TER'
+    #
+    #
+    #
+    # # gpkg = (r"C:\MrnMicro\temp\test_dissolve_fiona\test_dissolve_fiona.gpkg")
+    # # ce = 'input'
+    # # out = 'dissolved'
+    # # fields = 'DEP_SUR'
+    #
+    #
+    # # dissolveFiona(gpkg, ce, out, fields)
+    #
+    # dissolvedGeopandasGPKG(gpkg, ce, out, fields, singlepart = False)
+    #
+    # # dissolvePyqgis(ce, gpkg, out, fields)
+    #
+    # target_features = r"C:\MrnMicro\temp\test_join\FOR_repair.shp"
+    # join_features =r"C:\MrnMicro\temp\test_join\Pente_repair.shp"
+    # outfc =r"C:\MrnMicro\temp\test_join\join.shp"
+    #
+    # spatialJoinLargestOverlap(target_features, join_features, outfc, Pente = True)
 
 
     temps_final = time.time()
@@ -1348,8 +1470,3 @@ if __name__ == '__main__':
     # tempsTot = datetime.datetime.now() - debut
     # print("temps pour la durée du traitement: {}".format(tempsTot))
 
-    # x = 100000
-    # y = 100000
-    # ce = "C:/MrnMicro/temp/Appendice2020/ce_ecofor_territoire_a_taiter.shp"
-    # reptrav = r"C:\MrnMicro\temp"
-    # separerJeuClasseEntite(ce, reptrav, x, y)

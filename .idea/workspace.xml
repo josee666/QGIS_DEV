@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cabcface-e5bc-478a-8b1b-4ec64130beda" name="Default Changelist" comment="modif fonction GEOCODE">
+      <change afterPath="$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S_ORI.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py" beforeDir="false" afterPath="$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py" afterDir="false" />
     </list>
@@ -15,42 +17,45 @@
     <session id="-2008758967">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="44" />
-          <entry key="project.open.time.0" value="38" />
+          <entry key="project.closed" value="53" />
+          <entry key="project.open.time.0" value="44" />
           <entry key="project.open.time.1" value="6" />
           <entry key="project.open.time.10" value="3" />
-          <entry key="project.open.time.11" value="2" />
+          <entry key="project.open.time.11" value="4" />
+          <entry key="project.open.time.12" value="1" />
+          <entry key="project.open.time.13" value="1" />
           <entry key="project.open.time.17" value="1" />
-          <entry key="project.open.time.2" value="2" />
-          <entry key="project.open.time.3" value="5" />
+          <entry key="project.open.time.2" value="7" />
+          <entry key="project.open.time.3" value="7" />
           <entry key="project.open.time.4" value="6" />
           <entry key="project.open.time.5" value="2" />
-          <entry key="project.open.time.6" value="3" />
+          <entry key="project.open.time.6" value="4" />
           <entry key="project.open.time.7" value="4" />
           <entry key="project.open.time.8" value="2" />
-          <entry key="project.opened" value="74" />
+          <entry key="project.open.time.9" value="1" />
+          <entry key="project.opened" value="93" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="4" />
           <entry key="jkjoh" value="3" />
-          <entry key="py" value="21355" />
+          <entry key="py" value="28022" />
           <entry key="txt" value="209" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="213" />
-          <entry key="Python" value="21358" />
+          <entry key="Python" value="28025" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="jkjoh" value="1" />
           <entry key="pth" value="2" />
-          <entry key="py" value="446" />
-          <entry key="pyi" value="12" />
+          <entry key="py" value="530" />
+          <entry key="pyi" value="14" />
           <entry key="sadfsd" value="1" />
           <entry key="txt" value="7" />
         </counts>
@@ -58,22 +63,46 @@
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="10" />
-          <entry key="Python" value="447" />
-          <entry key="PythonStub" value="12" />
+          <entry key="Python" value="531" />
+          <entry key="PythonStub" value="14" />
         </counts>
       </usages-collector>
     </session>
   </component>
+  <component name="FavoritesManager">
+    <favorites_list name="QGIS_DEV" />
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="320">
+              <caret line="552" column="31" selection-start-line="552" selection-end-line="553" />
+              <folding>
+                <marker date="1619790976789" expanded="true" signature="9780:9782" ph="..." />
+                <marker date="1619790976789" expanded="true" signature="9780:46383" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S_ORI_ORI.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-3995">
+              <caret line="329" column="18" lean-forward="true" selection-start-line="329" selection-end-line="330" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="816">
-              <caret line="1103" column="45" selection-start-line="1103" selection-start-column="45" selection-end-line="1103" selection-end-column="45" />
+            <state relative-caret-position="11560">
+              <caret line="680" selection-start-line="655" selection-end-line="680" />
               <folding>
-                <element signature="e#428#451#0" expanded="true" />
-                <marker date="1617730967275" expanded="true" signature="40737:40739" ph="..." />
+                <element signature="e#450#473#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -90,15 +119,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>TransmissionpreliminaireAcq5peeiprel</find>
-      <find>.png</find>
-      <find>icon</find>
-      <find>__file__</find>
-      <find>secant</find>
-      <find>find_buffer_length</find>
-      <find>prepareAlgorithm</find>
-      <find>conversionFormatVersGDB</find>
-      <find>crs</find>
       <find>selectByExpression</find>
       <find>clause</find>
       <find>layer.selectByExpression</find>
@@ -120,6 +140,15 @@
       <find>supprimerUnChamp</find>
       <find>dissolvedGeopandasGPKG</find>
       <find>dissolvePyqgis</find>
+      <find>repair</find>
+      <find>supprimer</find>
+      <find>calculer</find>
+      <find>geopandas</find>
+      <find>sjoin</find>
+      <find>gpkg</find>
+      <find>grille_tuiles</find>
+      <find>grille_placettes</find>
+      <find>AN_PRO_ORI</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -161,7 +190,11 @@
         <option value="$PROJECT_DIR$/Developpement_DavidG/Plugins/transfer_layerfilegdb_to_geopackage/Transfer_LayerFileGdb_To_GeoPackage.py" />
         <option value="G:/OutilsProdDIF/outils/SONAR2/Assignation_des_pentes_carte_for/Source/Assignation_des_pentes_carte_for _20201217.py" />
         <option value="C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/geodataframe.py" />
+        <option value="G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/3-livrables-thierry/codes_et_donnees/polygonise.py" />
         <option value="$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py" />
+        <option value="$USER_HOME$/Desktop/processus_refonte_outil_1_0312S.py" />
+        <option value="$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S_ORI_ORI.py" />
+        <option value="$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S.py" />
       </list>
     </option>
   </component>
@@ -172,11 +205,11 @@
       </set>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="1433" />
-    <option name="y" value="2" />
-    <option name="width" value="1293" />
-    <option name="height" value="989" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="1432" />
+    <option name="y" value="-8" />
+    <option name="width" value="1296" />
+    <option name="height" value="1000" />
   </component>
   <component name="ProjectId" id="1ZthR98RVztTQHrpfO7r1gRgIGe" />
   <component name="ProjectLevelVcsManager">
@@ -188,7 +221,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -205,12 +237,13 @@
               <item name="QGIS_DEV" type="b2602c69:ProjectViewProjectNode" />
               <item name="QGIS_DEV" type="462c0819:PsiDirectoryNode" />
               <item name="Developpement_DavidG" type="462c0819:PsiDirectoryNode" />
-              <item name="Procedure_ScriptStandAlone" type="462c0819:PsiDirectoryNode" />
+              <item name="SONAR" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="ProjectViewState">
@@ -221,8 +254,9 @@
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../OutilsADG" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file://G:/OutilsProdDIF/modules_communs/python27/VP/bin/services/serviceBdSqlite.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -233,6 +267,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\ADG\QGIS_DEV\Developpement_DavidG\SONAR" />
       <recent name="E:\ADG\QGIS_DEV\Developpement_DavidG\Plugins\transfer_layerfilegdb_to_geopackage" />
       <recent name="E:\ADG\QGIS_DEV\Developpement_DavidG" />
       <recent name="E:\ADG\QGIS_DEV\Developpement_DavidG\Toolbox" />
@@ -251,7 +286,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.QGIS_commun">
+  <component name="RunManager" selected="Python.processus_refonte_outil_1_0312S">
     <configuration name="QGIS" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="QGIS_DEV" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -273,7 +308,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="QGIS_commun" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="QGIS_commun" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="QGIS_DEV" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -286,27 +321,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="centerline" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="QGIS_DEV" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Developpement_DavidG" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Developpement_DavidG/centerline.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -336,7 +350,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="complet_algorithm" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="processus_refonte_outil_1_0312S (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="QGIS_DEV" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -344,11 +358,53 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$USER_HOME$/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/OutilsHydro" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Desktop" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$USER_HOME$/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/OutilsHydro/complet_algorithm.py" />
+      <option name="SCRIPT_NAME" value="$USER_HOME$/Desktop/processus_refonte_outil_1_0312S.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="processus_refonte_outil_1_0312S" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="QGIS_DEV" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Developpement_DavidG/SONAR" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="processus_refonte_outil_1_0312S_ORI_ORI" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="QGIS_DEV" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Developpement_DavidG/SONAR" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S_ORI_ORI.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -359,18 +415,19 @@
     </configuration>
     <list>
       <item itemvalue="Python.QGIS_commun" />
-      <item itemvalue="Python.centerline" />
-      <item itemvalue="Python.complet_algorithm" />
+      <item itemvalue="Python.processus_refonte_outil_1_0312S" />
       <item itemvalue="Python.QGIS" />
       <item itemvalue="Python.collection" />
+      <item itemvalue="Python.processus_refonte_outil_1_0312S (1)" />
+      <item itemvalue="Python.processus_refonte_outil_1_0312S_ORI_ORI" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.QGIS_commun" />
+        <item itemvalue="Python.processus_refonte_outil_1_0312S" />
+        <item itemvalue="Python.processus_refonte_outil_1_0312S_ORI_ORI" />
+        <item itemvalue="Python.processus_refonte_outil_1_0312S (1)" />
         <item itemvalue="Python.collection" />
         <item itemvalue="Python.QGIS" />
-        <item itemvalue="Python.complet_algorithm" />
-        <item itemvalue="Python.centerline" />
       </list>
     </recent_temporary>
   </component>
@@ -510,21 +567,21 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1433" y="2" width="1293" height="989" extended-state="0" />
+    <frame x="1432" y="-8" width="1296" height="1000" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23984064" />
-      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.6221837" visible="true" weight="0.19157393" />
+      <window_info id="Structure" order="1" sideWeight="0.3778163" side_tool="true" weight="0.25437203" />
+      <window_info id="Favorites" order="2" sideWeight="0.3778163" side_tool="true" weight="0.25437203" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32917467" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.37225434" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.19630484" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.2886836" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.47113165" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32917467" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="8" weight="0.32917467" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.3290993" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" weight="0.32917467" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -646,130 +703,22 @@
           <line>32</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py</url>
+          <line>1234</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/OLD_QGIS_commun.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2703" />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Desktop/feuillet_DendroLiDAR_dM_multiprocess/feuillet_DendroLiDAR_dM_multiprocess.py" />
-    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Toolbox/sdat_to_tif/Sdat_to_Tif_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="960">
-          <caret line="132" column="25" selection-start-line="132" selection-start-column="16" selection-end-line="132" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1931548111/qgis/_core/QgsVectorFileWriter.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-816">
-          <caret line="16" column="6" selection-start-line="16" selection-start-column="6" selection-end-line="16" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/sadfsd" />
-    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/jkjoh" />
-    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Toolbox/Preparation_des_contrats/Transmission_preliminaire_Acq5peei_prel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="202">
-          <caret line="33" column="11" lean-forward="true" selection-start-line="33" selection-start-column="11" selection-end-line="33" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/ADG/CEF_languette/source/Corriger_Appendice_Preparation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-5231" />
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/ADG/CEF_languette/source/Corriger_Appendice_Correction_Adajacant_carte_ECOFORS5.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="558" column="49" lean-forward="true" selection-start-line="558" selection-start-column="49" selection-end-line="558" selection-end-column="49" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/SONAR2/Assignation_des_pentes_carte_for/Source/Assignation_des_pentes_carte_for _20201217.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="111" column="50" selection-start-line="111" selection-start-column="50" selection-end-line="111" selection-end-column="50" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1931548111/qgis/_core/QgsCoordinateTransformContext.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="351">
-          <caret line="318" column="8" selection-start-line="318" selection-start-column="8" selection-end-line="318" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/typeshed/stdlib/3/itertools.pyi">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-908">
-          <caret line="24" column="33" lean-forward="true" selection-start-line="24" selection-start-column="33" selection-end-line="24" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/2-livrables-lvsn/git-dump-20200131/master/carteforestiere/lacs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-772" />
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/2-livrables-lvsn/git-dump-20200131/master/carteforestiere/matching.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-4947" />
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/2-livrables-lvsn/git-dump-20200131/master/carteforestiere/peuplement.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-255" />
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/2-livrables-lvsn/git-dump-20200131/master/carteforestiere/scriptBatch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1177" />
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/2-livrables-lvsn/git-dump-20200131/master/carteforestiere/peuplement_lacs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1469" />
-      </provider>
-    </entry>
-    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/3-livrables-thierry/codes_et_donnees/polygonise.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1530" />
-      </provider>
-    </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/pandas/core/generic.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="5273" selection-start-line="5273" selection-end-line="5273" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/tests/test_dissolve.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="78" column="51" selection-start-line="78" selection-start-column="51" selection-end-line="78" selection-end-column="51" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/re.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="171">
-          <caret line="172" selection-start-line="172" selection-end-line="172" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/pandas/core/frame.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="298">
-          <caret line="5797" column="70" selection-start-line="5797" selection-start-column="29" selection-end-line="5797" selection-end-column="70" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1277762583/itertools.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="50">
@@ -809,13 +758,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="179">
           <caret line="218" column="4" selection-start-line="218" selection-start-column="4" selection-end-line="218" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1277762583/builtins.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-95">
-          <caret line="3497" column="6" selection-start-line="3497" selection-start-column="6" selection-end-line="3497" selection-end-column="6" />
         </state>
       </provider>
     </entry>
@@ -868,13 +810,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/io/file.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="126" column="24" lean-forward="true" selection-start-line="126" selection-start-column="24" selection-end-line="126" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/pandas/core/internals/managers.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="177">
@@ -893,16 +828,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="8704">
           <caret line="525" column="8" selection-start-line="525" selection-start-column="8" selection-end-line="525" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/geodataframe.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-97">
-          <caret line="666" column="26" selection-start-line="666" selection-start-column="19" selection-end-line="666" selection-end-column="26" />
         </state>
       </provider>
     </entry>
@@ -948,13 +873,188 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="17" selection-start-line="17" selection-end-line="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Toolbox/Preparation_des_contrats/Transmission_preliminaire_Acq5peei_prel_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1479" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Toolbox/préparer_carte_1er_decennal/préparer_carte_1er_decennal.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-415" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Plugins/creer_gpx/Creer_Gpx.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="260" column="42" selection-start-line="260" selection-start-column="42" selection-end-line="260" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/PyQt5/QtCore.pyi">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-895">
+          <caret line="8158" column="6" selection-start-line="8158" selection-start-column="6" selection-end-line="8158" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1277762583/qgis/_core/QgsField.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="176">
+          <caret line="358" column="8" selection-start-line="358" selection-start-column="8" selection-end-line="358" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Toolbox/préparer_carte_1er_decennal/préparer_carte_1er_decennal_algorithm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="129" column="16" selection-start-line="129" selection-start-column="16" selection-end-line="129" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1277762583/builtins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="5139" column="8" selection-start-line="5139" selection-start-column="8" selection-end-line="5139" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/1277762583/qgis/_core/QgsSpatialIndex.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="287">
+          <caret line="187" column="8" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/shapely/ops.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="128">
+          <caret line="161" column="4" selection-start-line="161" selection-start-column="4" selection-end-line="161" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/io/file.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-152">
+          <caret line="36" column="4" selection-start-line="36" selection-start-column="4" selection-end-line="36" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://G:/OutilsProdDIF/outils/Vectorisation_1er_inventaire/livrables-projet_mffp-phase_1/phase_1/3-livrables-thierry/codes_et_donnees/polygonise.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="207">
+          <caret line="85" column="16" lean-forward="true" selection-start-line="85" selection-start-column="16" selection-end-line="85" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/tools/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="187">
+          <caret line="11" column="12" selection-start-line="11" selection-start-column="5" selection-end-line="11" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/tools/overlay.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="121">
+          <caret line="140" column="40" lean-forward="true" selection-start-line="140" selection-start-column="4" selection-end-line="140" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/qgis/python/plugins/processing/core/Processing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="152" selection-start-line="152" selection-end-line="152" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/tools/sjoin.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="26" column="67" selection-start-line="26" selection-start-column="61" selection-end-line="26" selection-end-column="67" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://G:/OutilsProdDIF/modules_communs/python27/VP/bin/services/serviceBdSqlite.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2044">
+          <caret line="60" column="8" selection-start-line="60" selection-start-column="8" selection-end-line="60" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/Logiciels/OSGeo4W/apps/Python37/lib/site-packages/geopandas/geodataframe.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="307">
+          <caret line="293" selection-start-line="293" selection-end-line="293" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://G:/OutilsProdDIF/outils/VP_couches_annuelles/source/VP_couches_annuelles_toolbox.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="70" column="104" lean-forward="true" selection-start-line="70" selection-start-column="104" selection-end-line="70" selection-end-column="104" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/Toolbox/Preparation_des_contrats/Transmission_preliminaire_Acq5peei_prel.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="595">
+          <caret line="237" column="61" lean-forward="true" selection-start-line="237" selection-start-column="61" selection-end-line="237" selection-end-column="61" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Desktop/processus_refonte_outil_1_0312S.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="650">
+          <caret line="448" column="4" selection-start-line="448" selection-start-column="4" selection-end-line="448" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S_ORI.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1122" />
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Developpement_DavidG/QGIS_commun.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="816">
-          <caret line="1103" column="45" selection-start-line="1103" selection-start-column="45" selection-end-line="1103" selection-end-column="45" />
+        <state relative-caret-position="11560">
+          <caret line="680" selection-start-line="655" selection-end-line="680" />
           <folding>
-            <element signature="e#428#451#0" expanded="true" />
-            <marker date="1617730967275" expanded="true" signature="40737:40739" ph="..." />
+            <element signature="e#450#473#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S_ORI_ORI.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3995">
+          <caret line="329" column="18" lean-forward="true" selection-start-line="329" selection-end-line="330" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://G:/OutilsProdDIF/outils/CARTO_OutilsCarteOriginale/source/Acquisition/GH_HydroNAIPF_5prg.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="8" column="22" selection-start-line="8" selection-start-column="22" selection-end-line="8" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Developpement_DavidG/SONAR/processus_refonte_outil_1_0312S.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="552" column="31" selection-start-line="552" selection-end-line="553" />
+          <folding>
+            <marker date="1619790976789" expanded="true" signature="9780:9782" ph="..." />
+            <marker date="1619790976789" expanded="true" signature="9780:46383" ph="..." />
           </folding>
         </state>
       </provider>
