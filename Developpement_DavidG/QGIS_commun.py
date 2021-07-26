@@ -50,28 +50,28 @@ import rtree
 from osgeo import gdal
 
 
-# Pour faire marcher GRASS en StandAlone script
-# https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
-from processing.algs.grass7.Grass7Utils import Grass7Utils
-Grass7Utils.checkGrassIsInstalled()
-
-# Chemin ou QGIS est installer
-QgsApplication.setPrefixPath(r"C:\Logiciels\OSGeo4W\bin", True)
-
-# Créer une reference à QgsApplication,
-# Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
-qgs = QgsApplication([], False)
-
-# initialiser QGIS
-qgs.initQgis()
-
-# Initialiser les outils qgis
-Processing.initialize()
-
-
-# Permet d'utiliser les algorithmes "natif" ecrit en c++
-# https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
-QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+# # Pour faire marcher GRASS en StandAlone script
+# # https://gis.stackexchange.com/questions/296502/pyqgis-scripts-outside-of-qgis-gui-running-processing-algorithms-from-grass-prov
+# from processing.algs.grass7.Grass7Utils import Grass7Utils
+# Grass7Utils.checkGrassIsInstalled()
+#
+# # Chemin ou QGIS est installer
+# QgsApplication.setPrefixPath(r"C:\Logiciels\OSGeo4W\bin", True)
+#
+# # Créer une reference à QgsApplication,
+# # Mettre le 2eme argument a faux pour desativer l'interface graphique de QGIS
+# qgs = QgsApplication([], False)
+#
+# # initialiser QGIS
+# qgs.initQgis()
+#
+# # Initialiser les outils qgis
+# Processing.initialize()
+#
+#
+# # Permet d'utiliser les algorithmes "natif" ecrit en c++
+# # https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui
+# QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
 
 def connec_sqlite(nombd):
@@ -629,10 +629,10 @@ def calculateAttributes(layer, field, expression, selection=False):
 
                 feature.setAttribute(feature.fieldNameIndex(field), eval(expression))
                 layer.updateFeature(feature)
+
     elif selection:
         with edit(layer):
             for feature in layer.getSelectedFeatures():
-
                 feature.setAttribute(feature.fieldNameIndex(field), eval(expression))
                 layer.updateFeature(feature)
 
@@ -1122,6 +1122,8 @@ def dissolvePyqgis(ce, gpkg, nomDissolved, fields):
 
     processing.run("native:dissolve", {'INPUT':ce,'FIELD':fields,
                                        'OUTPUT':'ogr:dbname=\'{0}\' table=\"{1}\" (geom) sql='.format(gpkg, nomDissolved)})
+
+
 
 # def intersect():
 #     layergrille_placettes = QgsVectorLayer(grille_placettes, 'lyr', 'ogr')
