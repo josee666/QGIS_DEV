@@ -1149,11 +1149,16 @@ if __name__ == '__main__':
 
 
     reptrav = r"C:\MrnMicro\temp"
-    # gpkg = os.path.join(reptrav,"grilleCopie.gpkg")
-    gpkg = os.path.join(reptrav,"out.sqlite")
+    gpkg = os.path.join(reptrav,"SONAR2_outil_1.gpkg")
 
-    serviceBD = ServiceBdSqlite(gpkg, mode_spatialite = True)
-    serviceBD.sqlite3_etablir_connexion()
+
+
+    dissolvedGeopandasGPKG(gpkg, namefc, nameoutfc, fields = None, singlepart = False)
+
+
+
+    # serviceBD = ServiceBdSqlite(gpkg, mode_spatialite = True)
+    # serviceBD.sqlite3_etablir_connexion()
 
     # # Ca crée un dissolve
     # req = "CREATE Table Dissolve as " \
@@ -1192,10 +1197,10 @@ if __name__ == '__main__':
     #       "where ST_Intersects(a.geom , b.geom) " \
 
 
-    req = "CREATE Table grille_placettes_FOR_TOT as " \
-          "select a.plac_ID, a.geom, b.GEOC_FOR " \
-          "from grille_placettes a, Peuplement_FOR b " \
-          "where ST_Intersects(a.geom , b.geom) " \
+    # req = "CREATE Table grille_placettes_FOR_TOT as " \
+    #       "select a.plac_ID, a.geom, b.GEOC_FOR " \
+    #       "from grille_placettes a, Peuplement_FOR b " \
+    #       "where ST_Intersects(a.geom , b.geom) " \
 
     # req = "CREATE Table grille_placettes_FOR_TOT as " \
     #       "Select * " \
@@ -1209,32 +1214,32 @@ if __name__ == '__main__':
     #       "ON (ST_Intersects(a.geom , b.geom))"
 
 
-    serviceBD.executeRequete(req, commit=True)
-
-
-    # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le grille_placettes_pente fait
-    # Nous allons copier les valeurs de grille_placettes
-    req = """ insert into gpkg_contents select 'grille_placettes_FOR_TOT', data_type, 'grille_placettes_FOR_TOT', description, last_change, min_x, min_y, max_x, max_y, srs_id
-            from gpkg_contents where table_name = 'grille_placette_sub'
-            """
-    serviceBD.executeRequete(req, commit=True)
-
-    # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le grille_placettes_pente fait
-    # Nous allons copier les valeurs de grille_placettes
-    req = """ insert into gpkg_geometry_columns
-            select 'grille_placettes_FOR_TOT', column_name, geometry_type_name, srs_id, z, m
-            from gpkg_geometry_columns where table_name = 'grille_placette_sub'
-            """
-
-
-    serviceBD.executeRequete(req, commit=True)
-
-
-
-
-
-
-    print('afs')
+    # serviceBD.executeRequete(req, commit=True)
+    #
+    #
+    # # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le grille_placettes_pente fait
+    # # Nous allons copier les valeurs de grille_placettes
+    # req = """ insert into gpkg_contents select 'grille_placettes_FOR_TOT', data_type, 'grille_placettes_FOR_TOT', description, last_change, min_x, min_y, max_x, max_y, srs_id
+    #         from gpkg_contents where table_name = 'grille_placette_sub'
+    #         """
+    # serviceBD.executeRequete(req, commit=True)
+    #
+    # # Permet d'ajouter dasn la table gpkg_contents du GEOPAKAGE une ligne avec le grille_placettes_pente fait
+    # # Nous allons copier les valeurs de grille_placettes
+    # req = """ insert into gpkg_geometry_columns
+    #         select 'grille_placettes_FOR_TOT', column_name, geometry_type_name, srs_id, z, m
+    #         from gpkg_geometry_columns where table_name = 'grille_placette_sub'
+    #         """
+    #
+    #
+    # serviceBD.executeRequete(req, commit=True)
+    #
+    #
+    #
+    #
+    #
+    #
+    # print('afs')
 
 
 

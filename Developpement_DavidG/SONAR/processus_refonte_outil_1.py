@@ -374,7 +374,7 @@ def main():
 
     # Liste des chemins d'accÃ¨s pour les diffÃ©rents intrants
     path_us             = os.path.join(wd_intrants, "US_{0}.shp".format(us))
-    # path_PeupForestiers = os.path.join(wd_intrants, "DDE_20K_PEU_FOR_ORI_TRV_VUE_SE_{0}.shp".format(us))
+    path_PeupForestiers = os.path.join(wd_intrants, "DDE_20K_PEU_FOR_ORI_TRV_VUE_SE_{0}.shp".format(us))
 
 
 
@@ -402,9 +402,9 @@ def main():
     # path_SIP            = os.path.join(wd_intrants, "CFETBFEC_08664_SIP.shp")
 
 
-    path_PeupForestiers = "E:/ADG/SONAR/1415CE/Intrants/DDE_20K_PEU_FOR_ORI_TRV_VUE_SE_SUBSET_1415CE.shp"
-    path_geocodes = "E:/ADG/SONAR/1415CE/Intrants/LIST_GEOC_SUBSET_1415CE.shp"
-    path_ponc = "E:/ADG/SONAR/1415CE/Intrants/BDTQ_20K_BATIM_PO_SUBSET_1415CE.shp"
+    # path_PeupForestiers = "E:/ADG/SONAR/1415CE/Intrants/DDE_20K_PEU_FOR_ORI_TRV_VUE_SE_SUBSET_1415CE.shp"
+    # path_geocodes = "E:/ADG/SONAR/1415CE/Intrants/LIST_GEOC_SUBSET_1415CE.shp"
+    # path_ponc = "E:/ADG/SONAR/1415CE/Intrants/BDTQ_20K_BATIM_PO_SUBSET_1415CE.shp"
 
 
     # CrÃ©ation des grilles de tuiles et de placettes de 1000m x 1000m
@@ -468,7 +468,8 @@ def main():
 
 
     # Création de la couche des infranchissables (pente F et S et CO_TER est EAU ou INO
-    layer_path_PeupForestiers = QgsVectorLayer(path_PeupForestiers, 'lyr', 'ogr')
+    # layer_path_PeupForestiers = QgsVectorLayer(path_PeupForestiers, 'lyr', 'ogr')
+    layer_path_PeupForestiers = QgsVectorLayer(path_PeupForestiersFix, 'lyr', 'ogr')
     layer_path_PentesNum = QgsVectorLayer(path_PentesNum, 'lyr', 'ogr')
 
     processing.run("qgis:selectbyexpression", {'INPUT':layer_path_PeupForestiers,
@@ -496,6 +497,7 @@ def main():
     df_placettes_metadata_PeupForestiersPenteNum = 'C:/MrnMicro/temp/SONAR2_outil_1.gpkg|layername=df_placettes_metadata_PeupForestiersPenteNum'
     layerdf_placettes_metadata_PeupForestiersPenteNum = QgsVectorLayer(df_placettes_metadata_PeupForestiersPenteNum, 'lyr', 'ogr')
 
+    print("debut selection")
     # Ajouter une liste de champ qui sont nécessaires pour les Compilations
     MG_ex = QgsField('MG_ex', QVariant.String, '1')
     UFZ_ex = QgsField('UFZ_ex', QVariant.String, '1')

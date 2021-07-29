@@ -32,6 +32,7 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
 from .CreationplacetteMesurable import CreationplacetteMesurableAlgorithm
+from .PreparationIntrants import PreparationIntrantsAlgorithm
 from qgis.PyQt.QtGui import QIcon
 import os
 
@@ -54,6 +55,7 @@ class Provider(QgsProcessingProvider):
         """
         Loads all algorithms belonging to this provider.
         """
+        self.addAlgorithm(PreparationIntrantsAlgorithm())
         self.addAlgorithm(CreationplacetteMesurableAlgorithm())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())

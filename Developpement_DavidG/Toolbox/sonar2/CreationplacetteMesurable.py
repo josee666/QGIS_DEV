@@ -41,7 +41,8 @@ from random import randrange
 from qgis.PyQt.QtGui import QIcon
 import pandas as pd
 import line_profiler
-import ogr
+# import ogr
+from osgeo import ogr
 import shutil
 
 
@@ -429,11 +430,9 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         noCheckGeom.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
 
-        # Liste des chemins d'accÃ¨s pour les diffÃ©rents intrants
+        # Liste des intrant local (shp)
         path_us             = os.path.join(wd_intrants, "US_{0}.shp".format(us))
         path_PeupForestiers = os.path.join(wd_intrants, "DDE_20K_PEU_FOR_ORI_TRV_VUE_SE_{0}.shp".format(us))
-
-
         path_PentesNum      = os.path.join(wd_intrants, "DDE_20K_CLA_PEN_VUE_SE_{0}.shp".format(us))
         path_chemins        = os.path.join(wd_intrants, "CHEMIN_SONAR_{0}.shp".format(us))
         path_geocodes       = os.path.join(wd_intrants, "LIST_GEOC_{0}.shp".format(us))
@@ -461,6 +460,10 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         # path_PeupForestiers = "E:/ADG/SONAR/1415CE/Intrants/DDE_20K_PEU_FOR_ORI_TRV_VUE_SE_SUBSET_1415CE.shp"
         # path_geocodes = "E:/ADG/SONAR/1415CE/Intrants/LIST_GEOC_SUBSET_1415CE.shp"
         # path_ponc = "E:/ADG/SONAR/1415CE/Intrants/BDTQ_20K_BATIM_PO_SUBSET_1415CE.shp"
+
+
+        # Liste des intrant local (gpkg)
+
 
 
         feedback.pushInfo("\n1. Création de la grille\n")
@@ -522,7 +525,7 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo("\n3. Création des infranchissables\n")
 
         # Création de la couche des infranchissables (pente F et S et CO_TER est EAU ou INO
-        layer_path_PeupForestiers = QgsVectorLayer(path_PeupForestiers, 'lyr', 'ogr')
+        layer_path_PeupForestiers = QgsVectorLayer(path_PeupForestiersFix, 'lyr', 'ogr')
         layer_path_PentesNum = QgsVectorLayer(path_PentesNum, 'lyr', 'ogr')
 
         processing.run("qgis:selectbyexpression", {'INPUT':layer_path_PeupForestiers,
@@ -657,6 +660,7 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         calculerChampSelection(layerdf_placettes_metadata_PeupForestiersPenteNum, 'us_ex', 'O')
 
 
+
         # Selctionne de toutes les entité
         layerdf_placettes_metadata_PeupForestiersPenteNum.selectAll()
 
@@ -691,6 +695,8 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         calculerChampSelection(layerdf_placettes_metadata_PeupForestiersPenteNum, 'mesurable', 'O')
         layerdf_placettes_metadata_PeupForestiersPenteNum.invertSelection()
         calculerChampSelection(layerdf_placettes_metadata_PeupForestiersPenteNum, 'mesurable', 'N')
+
+
 
 
         feedback.pushInfo("\n5. Création des différents buffers\n")
@@ -940,6 +946,7 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         calculerChampSelection(layerdf_placettes_metadata_PeupForestiersPenteNum, 'mesurable', 'N')
 
 
+
         feedback.pushInfo("\n7. Étape finale de nettoyage des données\n")
         # Supprimer les champs non necessaires
         listChamp = []
@@ -1031,6 +1038,7 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         """
         return self.tr(self.groupId())
 
+
     def groupId(self):
         """
         Returns the unique ID of the group this algorithm belongs to. This
@@ -1040,6 +1048,7 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         formatting characters.
         """
         return ''
+
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
