@@ -1381,30 +1381,30 @@ if __name__ == '__main__':
     # bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
     # bd2 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bd2.gpkg"
     #
-    # conn = sqlite3.connect(bd1)
-    # conn.execute("ATTACH DATABASE '" + bd2 + "' AS data2")
-    #
-    #
-    # req = " ".join([
-    #     "UPDATE ecoulements as SELECT * from ecoulements",
-    #     "LEFT JOIN data2.tbl_copy",
-    #     "ON ecoulements.fid = data2.tbl_copy.fid"
-    # ])
-    #
-    # req = "create table tableJoin as select * from ecoulements LEFT JOIN data2.tbl_copy on ecoulements.fid = data2.tbl_copy.fid"
+    conn = sqlite3.connect(bd1)
+    conn.execute("ATTACH DATABASE '" + bd2 + "' AS data2")
 
-    # conn.execute(req)
-    # conn.commit()
-    # conn.close()
+
+    req = " ".join([
+        "UPDATE ecoulements as SELECT * from ecoulements",
+        "LEFT JOIN data2.tbl_copy",
+        "ON ecoulements.fid = data2.tbl_copy.fid"
+    ])
+
+    req = "create table tableJoin as select * from ecoulements LEFT JOIN data2.tbl_copy on ecoulements.fid = data2.tbl_copy.fid"
+
+    conn.execute(req)
+    conn.commit()
+    conn.close()
     #
     #
     #
-    # # Pour supprimer une table
-    # bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
-    # conn = sqlite3.connect(bd1)
-    # conn.execute("DROP TABLE ecoulements_bruts_ZM")
-    # conn.commit()
-    # conn.close()
+    # Pour supprimer une table
+    bd1 = r"\\Sef1271a\f1271g\Fdif\Transit\bouj1a\David_Gauthier_aka_Gandalf\ecoulements_bruts_ZM_confiance.gpkg"
+    conn = sqlite3.connect(bd1)
+    conn.execute("DROP TABLE ecoulements_bruts_ZM")
+    conn.commit()
+    conn.close()
 
 
 

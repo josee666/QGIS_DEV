@@ -41,7 +41,6 @@ from random import randrange
 from qgis.PyQt.QtGui import QIcon
 import pandas as pd
 import line_profiler
-# import ogr
 from osgeo import ogr
 import shutil
 
@@ -185,9 +184,9 @@ def grilleSondage(us, reptrav,x, y):
     ex = layer_usCopy.extent()
 
 
-    # Permet de faire une grille aléatoire entre -500m a 500m
+    # TODO Permet de faire une grille aléatoire entre -500m a 500m. Écrire le rand dasn un fichier txt
     rand = randrange(1000)-500
-    # rand = 0
+    # rand = 456
 
 
     xmin = ex.xMinimum()+ rand
@@ -205,9 +204,9 @@ def grilleSondage(us, reptrav,x, y):
                                                   'HSPACING':x,'VSPACING':y,'HOVERLAY':0,'VOVERLAY':0,
                                                   'CRS':QgsCoordinateReferenceSystem(ESPG),'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT})["OUTPUT"]
 
-    # grille = r"E:\ADG\SONAR\1415CE\Extrants\Couche GIS\grille_tuiles.shp"
+    # grille = r"E:\ADG\SONAR\1415CE\Extrants\Couche GIS\grille_tuile_1.shp"
 
-    processing.run("native:createspatialindex", {'INPUT':grille})
+    # processing.run("native:createspatialindex", {'INPUT':grille})
 
 
     # reparer les geometrie selon l'OGC
@@ -284,7 +283,7 @@ def grilleSondage(us, reptrav,x, y):
     # ajouter un champ plac_ID (pour grille_placettes)
     layer = QgsVectorLayer(grille_placettes_tmp2, 'lyr', 'ogr')
 
-    champ = QgsField('plac_ID', QVariant.String, '80')
+    champ = QgsField('plac_ID', QVariant.String, '10')
     layer.dataProvider().addAttributes([champ])
     layer.updateFields()
 
@@ -300,7 +299,7 @@ def grilleSondage(us, reptrav,x, y):
     layer.commitChanges()
 
 
-    print("grille_placettes")
+
     # Faire un intersect avec grille_placettes_tmp2 et grille tuile pour aller chercher le tuile_ID
     processing.run("native:joinattributesbylocation", {'INPUT':grille_placettes_tmp2,'JOIN':grille_tuiles,'PREDICATE':[0],'JOIN_FIELDS':[],
                                                        'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'',
@@ -955,7 +954,7 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
         for field in layerdf_placettes_metadata_PeupForestiersPenteNum.fields():
             listChamp.append(field.name())
 
-        listChampAsupprimer = ["fid_2","ORIG_FID", "JOIN_FID", "CO_IMP", "IPF_ZMI", "IPF_UFZ", "MODE_GEST",
+        listChampAsupprimer = ["fid_2","ORIG_FID", "JOIN_FID", "CO_IMP", "IPF_ZMI",
                                "DOMANIALIT", "NO_TDA", "NO_AGENCE", "US_FOR",
                                "UPE", "IPF_US", "SONDAGE", "SUPERFICIE_2",
                                "FEUILLET", "IN_SOMMET", "NOG", "SUPERFICIE_3",
@@ -997,10 +996,23 @@ class CreationplacetteMesurableAlgorithm(QgsProcessingAlgorithm):
             cmd = r"""ogrinfo {0} -sql "drop table {1}""".format(gpkg,elem)
             subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
 
+
+        # Supprimer les doublons avec le champ plac_id
+        processing.run("native:removeduplicatesbyattribute", {'INPUT':df_placettes_metadata_PeupForestiersPenteNum,
+                                                              'FIELDS':['plac_ID'],
+                                                              'OUTPUT':'ogr:dbname=\'{0}\' table=\"{1}\" (geom) sql='.format(gpkg,"sansDoublons")})
+
+        # supprimer df_placettes_metadata_PeupForestiersPenteNum
+        CREATE_NO_WINDOW = 0x08000000
+        cmd = r"""ogrinfo {0} -sql "drop table df_placettes_metadata_PeupForestiersPenteNum""".format(gpkg)
+        subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
+
+
         # renommer la couche final des placettes par grille_plac
         CREATE_NO_WINDOW = 0x08000000
-        cmd = r"""ogrinfo {0} -sql "ALTER TABLE df_placettes_metadata_PeupForestiersPenteNum RENAME TO grille_plac""".format(gpkg)
+        cmd = r"""ogrinfo {0} -sql "ALTER TABLE sansDoublons RENAME TO grille_plac""".format(gpkg)
         subprocess.call(cmd, creationflags=CREATE_NO_WINDOW)
+
 
 
         stream = open(os.path.join(dossierExtrants,'outil1.txt'), 'w')
